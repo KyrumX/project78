@@ -1,0 +1,3 @@
+[submodule "project78-api"]
+	path = project78-api
+	url = https://github.com/KyrumX/project78-api
