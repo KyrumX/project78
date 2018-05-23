@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">SmartWaiter</string>
+    <string name="speech_prompt">Spreek iets in&#8230;</string>
+    <string name="speech_not_supported">Sorry! Uw apparaat ondersteunt geen spraak.</string>
+</resources>
