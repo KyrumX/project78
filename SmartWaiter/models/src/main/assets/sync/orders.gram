@@ -1,0 +1,4 @@
+#JSGF V1.0;
+
+grammar order;
+public <orders> = cola | beer;
