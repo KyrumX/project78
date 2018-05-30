@@ -1,7 +1,9 @@
 package team.smartwaiter;
 
+import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
@@ -10,50 +12,61 @@ import android.widget.Button;
 
 import java.util.Locale;
 
-public class TTSService extends AppCompatActivity implements TextToSpeech.OnInitListener {
-    private static Button button;
+public class TTSService extends Activity implements TextToSpeech.OnInitListener {
+//    private static Button button;
     private TextToSpeech tts;
-    private String text1 = "Hello World!";
-    private String text2 = "I am in pain!";
+    private String text1 = "First Hello World!";
+    private String text2 = "Second hello world";
     private String text3 = "Why, creator, why?!";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        tts = new TextToSpeech(this, this);
+        tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if (status == TextToSpeech.SUCCESS) {
+                    int result = tts.setLanguage(Locale.ENGLISH);
+                    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        System.out.println("This Language is not supported");
+                    }
+                    speak("Hello, my name is Iris. How can i be of assistance?");
 
+                } else {
+                    System.out.println("Initilization Failed!");
+                }
+            }
 
-    }
+        });
+//        speak();
 
-    public void speak(){
-        tts.speak(text1, TextToSpeech.QUEUE_FLUSH, null);
-        tts.speak(text2, TextToSpeech.QUEUE_ADD, null);
-        tts.speak(text3, TextToSpeech.QUEUE_ADD, null);
     }
 
     public void speak(String text){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
+        }else{
+            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+        }
+    }
+
+    public void speakit(String text){
         tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
     }
 
     @Override
-    public void onInit(int status) {
-
-        if (status == TextToSpeech.SUCCESS) {
-
-            int result = tts.setLanguage(Locale.UK);
-
-            if (result == TextToSpeech.LANG_MISSING_DATA
-                    || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                System.out.println("TTS This Language is not supported");
-            } else {
-                button.setEnabled(true);
-                speak();
+    public void onInit(final int status) {
+        new Thread(new Runnable() {
+            public void run() {
+                if(status != TextToSpeech.ERROR) // initialization me error to nae ha
+                {
+                    tts.setPitch(1.1f); // saw from internet
+                    tts.setSpeechRate(0.4f); // f denotes float, it actually type casts 0.5 to float
+                    tts.setLanguage(Locale.US);
+                }
             }
-
-        } else {
-            System.out.println("TTS Initilization Failed!");
-        }
+        }).start();
 
     }
 
@@ -71,7 +84,10 @@ public class TTSService extends AppCompatActivity implements TextToSpeech.OnInit
 
     @Override
     protected void onDestroy() {
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+        }
         super.onDestroy();
-        tts.shutdown();
     }
 }

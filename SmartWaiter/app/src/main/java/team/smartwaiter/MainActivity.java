@@ -2,15 +2,16 @@ package team.smartwaiter;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.speech.RecognizerIntent;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import team.smartwaiter.TTSService;
 
 import java.io.File;
@@ -29,6 +30,10 @@ import static android.widget.Toast.makeText;
 
 public class MainActivity extends Activity implements
         RecognitionListener {
+
+    private static TextView txt;
+
+    private final int REQ_CODE_SPEECH_INPUT = 100;
 
     /* Named searches allow to quickly reconfigure the decoder */
     private static final String KWS_SEARCH = "wakeup";
@@ -49,6 +54,7 @@ public class MainActivity extends Activity implements
     public void onCreate(Bundle state) {
         super.onCreate(state);
 
+        txt = (TextView) findViewById(R.id.result_text);
 
         // Prepare the data for UI
         captions = new HashMap<>();
@@ -138,13 +144,22 @@ public class MainActivity extends Activity implements
 
         String text = hypothesis.getHypstr();
         if (text.equals(KEYPHRASE)) {
-            switchSearch(MENU_SEARCH);
-            makeText(getApplicationContext(), text, Toast.LENGTH_SHORT);
-        }else if (text.contains(ORDER_SEARCH)) {
-        switchSearch(ORDER_SEARCH);
-        ((TextView) findViewById(R.id.result_text)).setText(text);
-        }else
-        ((TextView) findViewById(R.id.result_text)).setText(text);
+            recognizer.stop();
+//            switchSearch(MENU_SEARCH);
+//            makeText(getApplicationContext(), text, Toast.LENGTH_SHORT);
+            Intent intent = new Intent(this, listen.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity ( intent );
+            recognizer.cancel();
+            recognizer.shutdown();
+            finish();
+        }
+
+//        else if (text.contains(ORDER_SEARCH)) {
+//        switchSearch(ORDER_SEARCH);
+//        ((TextView) findViewById(R.id.result_text)).setText(text);
+//        }else
+//        ((TextView) findViewById(R.id.result_text)).setText(text);
         }
 
     /**
@@ -154,8 +169,11 @@ public class MainActivity extends Activity implements
     public void onResult(Hypothesis hypothesis) {
         ((TextView) findViewById(R.id.result_text)).setText("");
         if (hypothesis != null) {
-            String text = hypothesis.getHypstr();
-            makeText(getApplicationContext(), text, Toast.LENGTH_SHORT).show();
+//            String text = hypothesis.getHypstr();
+//            makeText(getApplicationContext(), text, Toast.LENGTH_SHORT).show();
+//            Intent intent = new Intent(this, listen.class);
+//            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//            startActivity ( intent );
         }
     }
 
@@ -183,6 +201,7 @@ public class MainActivity extends Activity implements
 
         String caption = getResources().getString(captions.get(searchName));
         ((TextView) findViewById(R.id.caption_text)).setText(caption);
+
     }
 
     private void setupRecognizer(File assetsDir) throws IOException {
