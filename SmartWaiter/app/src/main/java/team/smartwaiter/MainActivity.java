@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.view.View;
 import android.widget.TextView;
 
 import java.io.File;
@@ -22,11 +23,15 @@ import edu.cmu.pocketsphinx.Hypothesis;
 import edu.cmu.pocketsphinx.RecognitionListener;
 import edu.cmu.pocketsphinx.SpeechRecognizer;
 import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
+import team.smartwaiter.api.ApiController;
 
+import android.os.StrictMode;
 
 
 public class MainActivity extends Activity implements
         RecognitionListener {
+
+    private final ApiController API = new ApiController();
 
     private static TextView txt;
 
@@ -54,6 +59,10 @@ public class MainActivity extends Activity implements
         captions = new HashMap<>();
         captions.put(KWS_SEARCH, R.string.kws_caption);
         setContentView(R.layout.activity_main);
+        if (android.os.Build.VERSION.SDK_INT > 9) {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+        }
 
         ((TextView) findViewById(R.id.caption_text))
                 .setText("Preparing the application");
@@ -211,5 +220,11 @@ public class MainActivity extends Activity implements
     @Override
     public void onTimeout() {
         switchSearch(KWS_SEARCH);
+    }
+
+
+    //Aarons API tester button :)
+    public void TestLogger(View v) throws IOException {
+        API.Print();
     }
 }
