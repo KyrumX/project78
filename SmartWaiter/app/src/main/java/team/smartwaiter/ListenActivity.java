@@ -5,6 +5,7 @@ import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.os.Bundle;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,6 +20,9 @@ import android.content.Intent;
 
 import java.util.ArrayList;
 import java.util.Locale;
+
+import team.smartwaiter.api.ApiController;
+import team.smartwaiter.api.Serializer;
 
 public class ListenActivity extends Activity implements RecognitionListener, TextToSpeech.OnInitListener{
     private static TextView txtlisten;
@@ -112,7 +116,14 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
 
         System.out.println(output);
 
-        List<String> food = Arrays.asList("burger", "rice", "spaghetti", "mixed grill", "soup", "steak", "salad", "macaroni");
+        //List<String> food = Arrays.asList("burger", "rice", "spaghetti", "mixed grill", "soup", "steak", "salad", "macaroni");
+        ApiController controller = new ApiController();
+        List<String> food = null;
+        try {
+            food = Serializer.ConvertMenu(controller.getMenuJson());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         List<String> drinks = Arrays.asList("cola", "ice tea", "fanta", "lemonade", "chocolate milk");
 
         if (!processMeal(food, matches))

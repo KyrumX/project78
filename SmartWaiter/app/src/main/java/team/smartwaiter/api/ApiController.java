@@ -11,16 +11,21 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 
 public class ApiController {
 
     private final String DEFAULT_URL = "http://86.82.103.122:8080";
 
     public void Print() throws IOException {
-        getMenu();
+        ArrayList<String> l = Serializer.ConvertMenu(getMenuJson());
+        for (String str : l) {
+            System.out.println(str);
+        }
+
     }
 
-    public String getMenu() throws IOException {
+    public JSONArray getMenuJson() throws IOException {
         String RequestedUrl = DEFAULT_URL + "/api/menu/";
         System.out.print(RequestedUrl);
 
@@ -49,11 +54,12 @@ public class ApiController {
 
         try {
             JSONArray result = new JSONArray(response.toString());
+            return result;
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        return response.toString();
+        return null;
     }
 
 }
