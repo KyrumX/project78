@@ -30,8 +30,6 @@ public class MainActivity extends Activity implements
 
     private static TextView txt;
 
-    private final int REQ_CODE_SPEECH_INPUT = 100;
-
     /* Named searches allow to quickly reconfigure the decoder */
     private static final String KWS_SEARCH = "wakeup";
 //    private static final String ORDER_SEARCH = "order";
@@ -55,12 +53,8 @@ public class MainActivity extends Activity implements
 //        // Prepare the data for UI
         captions = new HashMap<>();
         captions.put(KWS_SEARCH, R.string.kws_caption);
-//        captions.put(MENU_SEARCH, R.string.menu_caption);
-//        captions.put(ORDER_SEARCH, R.string.order_caption);
         setContentView(R.layout.activity_main);
 
-
-//        service.speak("Hello, my name is Iris. I will be assisting you today.");
         ((TextView) findViewById(R.id.caption_text))
                 .setText("Preparing the application");
 
@@ -141,9 +135,7 @@ public class MainActivity extends Activity implements
         String text = hypothesis.getHypstr();
         if (text.equals(KEYPHRASE)) {
             recognizer.stop();
-//            switchSearch(MENU_SEARCH);
-//            makeText(getApplicationContext(), text, Toast.LENGTH_SHORT);
-            Intent intent = new Intent(this, listen.class);
+            Intent intent = new Intent(this, ListenActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity ( intent );
             recognizer.cancel();
@@ -151,12 +143,7 @@ public class MainActivity extends Activity implements
             finish();
         }
 
-//        else if (text.contains(ORDER_SEARCH)) {
-//        switchSearch(ORDER_SEARCH);
-//        ((TextView) findViewById(R.id.result_text)).setText(text);
-//        }else
-//        ((TextView) findViewById(R.id.result_text)).setText(text);
-        }
+    }
 
     /**
      * This callback is called when we stop the recognizer.
@@ -165,11 +152,7 @@ public class MainActivity extends Activity implements
     public void onResult(Hypothesis hypothesis) {
         ((TextView) findViewById(R.id.result_text)).setText("");
         if (hypothesis != null) {
-//            String text = hypothesis.getHypstr();
-//            makeText(getApplicationContext(), text, Toast.LENGTH_SHORT).show();
-//            Intent intent = new Intent(this, listen.class);
-//            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-//            startActivity ( intent );
+
         }
     }
 
@@ -217,16 +200,6 @@ public class MainActivity extends Activity implements
 
         // Create keyword-activation search.
         recognizer.addKeyphraseSearch(KWS_SEARCH, KEYPHRASE);
-
-        // Create grammar-based search for selection between demos
-        File menuGrammar = new File(assetsDir, "menu.gram");
-//        recognizer.addGrammarSearch(MENU_SEARCH, menuGrammar);
-//
-//
-//        // Create grammar-based search for recognition
-//        File ordersGrammer = new File(assetsDir, "orders.gram");
-//        recognizer.addGrammarSearch(ORDER_SEARCH, ordersGrammer);
-
 
     }
 

@@ -3,7 +3,6 @@ package team.smartwaiter;
 import android.app.Activity;
 import android.os.Build;
 import android.speech.tts.TextToSpeech;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 import java.util.Arrays;
@@ -21,7 +20,7 @@ import android.content.Intent;
 import java.util.ArrayList;
 import java.util.Locale;
 
-public class listen extends Activity implements RecognitionListener, TextToSpeech.OnInitListener{
+public class ListenActivity extends Activity implements RecognitionListener, TextToSpeech.OnInitListener{
     private static TextView txtlisten;
     private TextToSpeech tts;
     final SpeechRecognizer speech = SpeechRecognizer.createSpeechRecognizer(this);
@@ -71,7 +70,7 @@ public class listen extends Activity implements RecognitionListener, TextToSpeec
 
     @Override
     public void onReadyForSpeech(Bundle bundle) {
-//        txtlisten.setText("Ready for input");
+
     }
 
     @Override
@@ -104,75 +103,66 @@ public class listen extends Activity implements RecognitionListener, TextToSpeec
         ArrayList<String> matches = results
                 .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
 
-        final String output = matches.get(0);
+        final String output = matches.get(0).toLowerCase();
+        System.out.println("Output: " + output);
+
         for (String x : matches) {
             System.out.println(x);
         }
+
         System.out.println(output);
-//        speech.destroy();
-//        speech.cancel();
-        txtlisten.setText(output);
 
         List<String> food = Arrays.asList("burger", "rice", "spaghetti", "mixed grill", "soup", "steak", "salad", "macaroni");
-        List<String> drinks = Arrays.asList("cola", "ice tea", "Fanta", "lemonade", "chocolate milk");
-//        List<String> amount = Arrays.asList("one", "two", "three", "four", "five");
-//        List<String> amountnum = Arrays.asList("1", "2", "3", "4", "5");
+        List<String> drinks = Arrays.asList("cola", "ice tea", "fanta", "lemonade", "chocolate milk");
 
-        if (!processMeal(food, output)) {
-            processMeal(drinks, output);
-        }
+        if (!processMeal(food, matches))
+            if(!processMeal(drinks, matches))
+                System.out.println("Couldn't find item");
 
     }
 
 
-    public boolean processMeal(List<String> typelist,  String output){
+    public boolean processMeal(List<String> typelist,  ArrayList<String> output){
 
         List<String> amount = Arrays.asList("one", "two", "three", "four", "five");
         List<String> amountnum = Arrays.asList("1", "2", "3", "4", "5");
-
-        boolean productfound = false;
-        for (String x : typelist) {
-            if (output.contains(x)) {
-                productfound = true;
-                boolean foundamount = false;
-                for (String a : amount) {
-                    if (output.contains(a)) {
-                        String order = "Order: " + x + " | amount: " + a;
-                        txtlisten.setText(order);
-                        speak(a + " " + x + ". Confirm by saying yes.");
-                        foundamount = true;
-                        return true;
-                    }
-                }
-
-                if (!foundamount) {
-                    for (String z : amountnum){
-                        if (output.contains(z)){
-                            String order = "Order: " + x + " | amount: " + z;
+        for (String consumable : typelist) {
+            for (String line : output) {
+                if (line.toLowerCase().contains(consumable)) {
+                    for (String a : amount) {
+                        if (line.contains(a)) {
+                            String order = "Order: " + consumable + " | amount: " + a;
                             txtlisten.setText(order);
-                            speak(z + " " + x + ". Confirm by saying yes.");
-                            foundamount = true;
+                            speak(a + " " + consumable + ". Confirm by saying yes.");
                             return true;
                         }
                     }
-                }
 
-                if (!foundamount) {
-                    String order = "Order: " + x + " | amount: one";
+
+                    for (String z : amountnum) {
+                        if (line.contains(z)) {
+                            String order = "Order: " + consumable + " | amount: " + z;
+                            txtlisten.setText(order);
+                            speak(z + " " + consumable + ". Confirm by saying yes.");
+                            return true;
+                        }
+                    }
+
+
+                    String order = "Order: " + consumable + " | amount: one";
                     txtlisten.setText(order);
-                    speak("One " + x + ". Confirm by saying yes.");
+                    speak("One " + consumable + ". Confirm by saying yes.");
                     return true;
+
+
                 }
-
-
 
             }
-        }
-        if (!productfound){
-            txtlisten.setText("I didn't quite catch that");
-            speak("I can't seem to figure out what you said, please try again.");
+
         }
 
+        txtlisten.setText("I didn't quite catch that");
+        speak("I can't seem to figure out what you said, please try again.");
         return false;
     }
 
@@ -191,10 +181,8 @@ public class listen extends Activity implements RecognitionListener, TextToSpeec
     public void onInit(final int status) {
         new Thread(new Runnable() {
             public void run() {
-                if(status != TextToSpeech.ERROR) // initialization me error to nae ha
-                {
+                if(status != TextToSpeech.ERROR)
                     tts.setLanguage(Locale.US);
-                }
             }
         }).start();
     }

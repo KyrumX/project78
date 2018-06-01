@@ -19,8 +19,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".listen"></activity>
-        <activity android:name=".TTSService"></activity>
+        <activity android:name=".ListenActivity"></activity>
     </application>
 
 </manifest>
