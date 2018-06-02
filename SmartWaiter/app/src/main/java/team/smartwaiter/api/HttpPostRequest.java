@@ -1,19 +1,19 @@
 package team.smartwaiter.api;
 
-import android.os.AsyncTask;
-
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class HttpGetRequest extends HttpRequest {
-    protected static final String REQUEST_METHOD = "GET";
+public class HttpPostRequest extends HttpRequest {
+    protected static final String REQUEST_METHOD = "POST";
 
     @Override
     protected String doInBackground(String... strings) {
         String stringUrl = strings[0];
+        String params = strings[1];
         String result;
         String inputLine;
 
@@ -28,12 +28,16 @@ public class HttpGetRequest extends HttpRequest {
             connection.setRequestProperty("User-Agent", REQUEST_AGENT);
             connection.setRequestProperty("Accept", REQUEST_ACCEPT);
 
-            connection.connect();
+            connection.setDoOutput(true);
+            DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream());
+            outputStream.writeBytes(params);
+            outputStream.flush();
+            outputStream.close();
+
 
             InputStreamReader streamReader = new InputStreamReader(connection.getInputStream());
 
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(connection.getInputStream()));
+            BufferedReader in = new BufferedReader(streamReader);
             StringBuffer response = new StringBuffer();
 
             while ((inputLine = in.readLine()) != null) {
