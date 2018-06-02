@@ -5,6 +5,7 @@ import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.os.Bundle;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,6 +20,9 @@ import android.content.Intent;
 
 import java.util.ArrayList;
 import java.util.Locale;
+
+import team.smartwaiter.api.ApiController;
+import team.smartwaiter.api.Serializer;
 
 public class ListenActivity extends Activity implements RecognitionListener, TextToSpeech.OnInitListener{
     private static TextView txtlisten;
@@ -112,12 +116,14 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
 
         System.out.println(output);
 
-        List<String> food = Arrays.asList("burger", "rice", "spaghetti", "mixed grill", "soup", "steak", "salad", "macaroni");
-        List<String> drinks = Arrays.asList("cola", "ice tea", "fanta", "lemonade", "chocolate milk");
+        //List<String> food = Arrays.asList("burger", "rice", "spaghetti", "mixed grill", "soup", "steak", "salad", "macaroni");
+        ApiController controller = new ApiController();
+        List<String> menu = null;
+        menu = Serializer.ConvertMenu(controller.getMenu());
+//        List<String> drinks = Arrays.asList("cola", "ice tea", "fanta", "lemonade", "chocolate milk");
 
-        if (!processMeal(food, matches))
-            if(!processMeal(drinks, matches))
-                System.out.println("Couldn't find item");
+        if (!processMeal(menu, matches))
+            System.out.println("Couldn't find item");
 
     }
 
@@ -126,39 +132,54 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
 
         List<String> amount = Arrays.asList("one", "two", "three", "four", "five");
         List<String> amountnum = Arrays.asList("1", "2", "3", "4", "5");
-        for (String consumable : typelist) {
-            for (String line : output) {
-                if (line.toLowerCase().contains(consumable)) {
-                    for (String a : amount) {
-                        if (line.contains(a)) {
-                            String order = "Order: " + consumable + " | amount: " + a;
-                            txtlisten.setText(order);
-                            speak(a + " " + consumable + ". Confirm by saying yes.");
-                            return true;
+        String meal = "";
+        String totalamount = "";
+
+        boolean foundconsumable = false;
+        boolean foundamount = false;
+
+        for (String line : output) {
+            if (foundconsumable && foundamount) {
+                String order = "Order: " + meal + " | amount: " + totalamount;
+                txtlisten.setText(order);
+                speak(totalamount + " " + meal + ". Confirm by saying yes.");
+                return true;
+            } else {
+                if (!foundconsumable) {
+                    for (String consumable : typelist) {
+                        if (line.toLowerCase().contains(consumable)) {
+                            meal = consumable;
+                            foundconsumable = true;
+                            break;
                         }
                     }
-
-
-                    for (String z : amountnum) {
-                        if (line.contains(z)) {
-                            String order = "Order: " + consumable + " | amount: " + z;
-                            txtlisten.setText(order);
-                            speak(z + " " + consumable + ". Confirm by saying yes.");
-                            return true;
-                        }
-                    }
-
-
-                    String order = "Order: " + consumable + " | amount: one";
-                    txtlisten.setText(order);
-                    speak("One " + consumable + ". Confirm by saying yes.");
-                    return true;
-
-
                 }
 
-            }
+                if (!foundamount) {
+                    for (String am : amount) {
+                        if (line.contains(am)) {
+                            totalamount = am;
+                            foundamount = true;
+                            break;
+                        }
+                    }
 
+                    for (String an : amountnum) {
+                        if (line.contains(an)) {
+                            totalamount = an;
+                            foundamount = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (foundconsumable && !foundamount){
+            String order = "Order: " + meal + " | amount: one";
+            txtlisten.setText(order);
+            speak("One " + meal + ". Confirm by saying yes.");
+            return true;
         }
 
         txtlisten.setText("I didn't quite catch that");
