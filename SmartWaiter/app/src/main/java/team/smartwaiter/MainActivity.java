@@ -25,8 +25,6 @@ import edu.cmu.pocketsphinx.SpeechRecognizer;
 import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
 import team.smartwaiter.api.ApiController;
 
-import android.os.StrictMode;
-
 
 public class MainActivity extends Activity implements
         RecognitionListener {
@@ -59,10 +57,6 @@ public class MainActivity extends Activity implements
         captions = new HashMap<>();
         captions.put(KWS_SEARCH, R.string.kws_caption);
         setContentView(R.layout.activity_main);
-        if (android.os.Build.VERSION.SDK_INT > 9) {
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
-        }
 
         ((TextView) findViewById(R.id.caption_text))
                 .setText("Preparing the application");

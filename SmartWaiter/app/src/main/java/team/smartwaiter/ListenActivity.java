@@ -118,17 +118,12 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
 
         //List<String> food = Arrays.asList("burger", "rice", "spaghetti", "mixed grill", "soup", "steak", "salad", "macaroni");
         ApiController controller = new ApiController();
-        List<String> food = null;
-        try {
-            food = Serializer.ConvertMenu(controller.getMenuJson());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        List<String> drinks = Arrays.asList("cola", "ice tea", "fanta", "lemonade", "chocolate milk");
+        List<String> menu = null;
+        menu = Serializer.ConvertMenu(controller.getMenu());
+//        List<String> drinks = Arrays.asList("cola", "ice tea", "fanta", "lemonade", "chocolate milk");
 
-        if (!processMeal(food, matches))
-            if(!processMeal(drinks, matches))
-                System.out.println("Couldn't find item");
+        if (!processMeal(menu, matches))
+            System.out.println("Couldn't find item");
 
     }
 

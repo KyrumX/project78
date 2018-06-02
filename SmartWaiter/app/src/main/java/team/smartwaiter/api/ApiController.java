@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,54 +13,38 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
 public class ApiController {
 
     private final String DEFAULT_URL = "http://86.82.103.122:8080";
 
     public void Print() throws IOException {
-        ArrayList<String> l = Serializer.ConvertMenu(getMenuJson());
-        for (String str : l) {
-            System.out.println(str);
-        }
+        getMenu();
 
     }
 
-    public JSONArray getMenuJson() throws IOException {
+    public JSONArray getMenu() {
         String RequestedUrl = DEFAULT_URL + "/api/menu/";
-        System.out.print(RequestedUrl);
-
-        URL object = new URL(RequestedUrl);
-        HttpURLConnection connection = (HttpURLConnection) object.openConnection();
-
-        connection.setRequestMethod("GET");
-        connection.setRequestProperty("User-Agent", "Mozilla/5.0");
-        connection.setRequestProperty("Accept", "application/json");
-
-        int responseCode = connection.getResponseCode();
-        //TODO: DO SOMETHING WITH RESPONSE CODE, MAYBE JUST IGNORE BECAUSE HE TOLD US TO SIMULATE IT ANYWAY?
-
-        System.out.println("Sending 'GET' request to URL : " + RequestedUrl);
-        System.out.println("Response Code : " + responseCode);
-
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(connection.getInputStream()));
-        String inputLine;
-        StringBuffer response = new StringBuffer();
-
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
-        }
-        in.close();
+        String result;
+        JSONArray jsonArray;
+        HttpGetRequest request = new HttpGetRequest();
 
         try {
-            JSONArray result = new JSONArray(response.toString());
-            return result;
-        } catch (JSONException e) {
+            result = request.execute(RequestedUrl).get();
+            Object json = new JSONTokener(result).nextValue();
+            if(json instanceof JSONObject) {
+                return null;
+            }
+            else if (json instanceof JSONArray) {
+                jsonArray = new JSONArray(result);
+                return jsonArray;
+            }
+        } catch (Exception e ) {
             e.printStackTrace();
         }
-
         return null;
     }
+
 
 }
