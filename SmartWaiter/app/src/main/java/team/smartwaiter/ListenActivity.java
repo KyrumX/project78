@@ -5,7 +5,6 @@ import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.os.Bundle;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -120,13 +119,25 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         ApiController controller = new ApiController();
         List<String> menu = null;
         menu = Serializer.ConvertMenu(controller.getMenu());
+        for(String i : menu)
+            System.out.println(i);
 //        List<String> drinks = Arrays.asList("cola", "ice tea", "fanta", "lemonade", "chocolate milk");
 
-        if (!processMeal(menu, matches))
+
+        if (!processMeal(menu, matches)) {
             System.out.println("Couldn't find item");
+        }else if(requestInfo(menu, matches)){
+
+            //TODO show text from api data
+            txtlisten.setText("insert data about in here");
+
+        }
+
+
+
+
 
     }
-
 
     public boolean processMeal(List<String> typelist,  ArrayList<String> output){
 
@@ -183,6 +194,34 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         }
 
         txtlisten.setText("I didn't quite catch that");
+        speak("I can't seem to figure out what you said, please try again.");
+        return false;
+    }
+
+    public boolean checkForWord(List<String> output) {
+        List<String> list = Arrays.asList("info", "information");
+        for (String word : output) {
+            for (String i : list) {
+                if (word.toLowerCase().contains(i)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public Boolean requestInfo(List<String> typelist, List<String> output) {
+        String menuitem = "";
+        for (String item : typelist) {
+            for (String line : output) {
+                if (checkForWord(output) && line.toLowerCase().contains(item)) {
+                    menuitem = item;
+                    speak("Showing the information on " + menuitem + " right now");
+                    return true;
+
+                }
+            }
+        }
         speak("I can't seem to figure out what you said, please try again.");
         return false;
     }
