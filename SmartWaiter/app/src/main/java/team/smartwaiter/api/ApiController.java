@@ -1,30 +1,21 @@
 package team.smartwaiter.api;
 
-import android.os.AsyncTask;
-
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.concurrent.ExecutionException;
+import java.util.HashMap;
 
 public class ApiController {
 
     private final String DEFAULT_URL = "http://86.82.103.122:8080";
 
     public void Print() {
-        test();
-
+        HashMap<Integer, String> hm = Serializer.MenuItems(getMenu());
+        System.out.println(hm);
     }
 
     public JSONArray getMenu() {
