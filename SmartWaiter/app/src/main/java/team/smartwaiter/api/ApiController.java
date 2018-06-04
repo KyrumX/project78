@@ -14,8 +14,22 @@ public class ApiController {
     private final String DEFAULT_URL = "http://86.82.103.122:8080";
 
     public void Print() {
-        HashMap<Integer, String> hm = Serializer.MenuItems(getMenu());
+
+        //Ralph, please take a look at my trial code here:
+        HashMap<Integer, String> hm = Serializer.MenuItems(getMenu()); // <-- Link the menu item names with ids
         System.out.println(hm);
+        int keyV = 0;
+        for (int key : hm.keySet()) {
+            if (hm.get(key).equals("fries")) { // <-- Instead of fries you should do the menu item input you've received
+                keyV = key;
+            }
+        }
+
+        //Here you should check wether keyV is 0, if it is the product has not been found, it should not happen because Selims code checks wether an item exists before going on
+
+        JSONObject o = getMenuItemDetails(keyV); // <-- Pull the JSON data from the database
+        HashMap hm2 = Serializer.MenuItemInformation(o); // <-- Transfrom the JSON to usefull data, a hashmap in this case
+        System.out.println(hm2);
     }
 
     public JSONArray getMenu() {
@@ -33,6 +47,28 @@ public class ApiController {
             else if (json instanceof JSONArray) {
                 jsonArray = new JSONArray(result);
                 return jsonArray;
+            }
+        } catch (Exception e ) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public JSONObject getMenuItemDetails(int id) {
+        String RequestedUrl = DEFAULT_URL + "/api/menu/" + id;
+        String result;
+        JSONObject jsonObject;
+        HttpRequest request = new HttpGetRequest();
+
+        try {
+            result = request.execute(RequestedUrl).get();
+            Object json = new JSONTokener(result).nextValue();
+            if(json instanceof JSONObject) {
+                jsonObject = new JSONObject(result);
+                return jsonObject;
+            }
+            else if (json instanceof JSONArray) {
+                return null;
             }
         } catch (Exception e ) {
             e.printStackTrace();

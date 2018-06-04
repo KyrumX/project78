@@ -2,6 +2,7 @@ package team.smartwaiter.api;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,6 +37,22 @@ public class Serializer {
                 e.printStackTrace();
             }
         }
+        return hm;
+    }
+
+    public static HashMap<String, String> MenuItemInformation(JSONObject jsonObject) {
+        HashMap<String, String> hm = new HashMap<String, String>();
+
+        if(jsonObject == null)
+            return hm;
+        try {
+            hm.put("name", jsonObject.get("name").toString());
+            hm.put("allergy", jsonObject.get("allergy").toString());
+            hm.put("description", jsonObject.get("description").toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
         return hm;
     }
 }
