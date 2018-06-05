@@ -41,6 +41,8 @@ public class ApiController {
             }
             else if (json instanceof JSONArray) {
                 jsonArray = new JSONArray(result);
+                System.out.println("PRINTING JSON ARRAY--*");
+                System.out.println(jsonArray);
                 return jsonArray;
             }
         } catch (Exception e ) {
