@@ -4,6 +4,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
+import java.security.Key;
+import java.security.KeyStore;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,13 +25,14 @@ public class ApiController {
             if (hm.get(key).equals("fries")) { // <-- Instead of fries you should do the menu item input you've received
                 keyV = key;
             }
+
         }
 
         //Here you should check wether keyV is 0, if it is the product has not been found, it should not happen because Selims code checks wether an item exists before going on
 
         JSONObject o = getMenuItemDetails(keyV); // <-- Pull the JSON data from the database
-        HashMap hm2 = Serializer.MenuItemInformation(o); // <-- Transfrom the JSON to usefull data, a hashmap in this case
-        System.out.println(hm2);
+        HashMap hm2 = Serializer.MenuItemInformation(o);// <-- Transfrom the JSON to usefull data, a hashmap in this case
+
     }
 
     public JSONArray getMenu() {

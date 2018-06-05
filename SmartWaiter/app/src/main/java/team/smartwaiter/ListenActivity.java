@@ -22,6 +22,7 @@ import java.util.Locale;
 
 import team.smartwaiter.api.ApiController;
 import team.smartwaiter.api.Serializer;
+import team.smartwaiter.getInformation;
 
 public class ListenActivity extends Activity implements RecognitionListener, TextToSpeech.OnInitListener{
     private static TextView txtlisten;
@@ -127,9 +128,7 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         if (!processMeal(menu, matches)) {
             System.out.println("Couldn't find item");
         }else if(requestInfo(menu, matches)){
-
-            //TODO show text from api data
-            txtlisten.setText("insert data about in here");
+            System.out.println("it worked");
 
         }
 
@@ -215,8 +214,9 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         for (String item : typelist) {
             for (String line : output) {
                 if (checkForWord(output) && line.toLowerCase().contains(item)) {
-                    menuitem = item;
+                    menuitem = item.toLowerCase();
                     speak("Showing the information on " + menuitem + " right now");
+                     txtlisten.setText(getInformation.showInformation(menuitem, "description"));
                     return true;
 
                 }
