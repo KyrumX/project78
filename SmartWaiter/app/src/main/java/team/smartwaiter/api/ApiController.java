@@ -1,29 +1,37 @@
 package team.smartwaiter.api;
 
-import android.os.AsyncTask;
-
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.security.Key;
+import java.security.KeyStore;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.concurrent.ExecutionException;
+import java.util.HashMap;
 
 public class ApiController {
 
     private final String DEFAULT_URL = "http://86.82.103.122:8080";
 
     public void Print() {
-        postOrder();
+
+        //Ralph, please take a look at my trial code here:
+        HashMap<Integer, String> hm = Serializer.MenuItems(getMenu()); // <-- Link the menu item names with ids
+        System.out.println(hm);
+        int keyV = 0;
+        for (int key : hm.keySet()) {
+            if (hm.get(key).equals("fries")) { // <-- Instead of fries you should do the menu item input you've received
+                keyV = key;
+            }
+
+        }
+
+        //Here you should check wether keyV is 0, if it is the product has not been found, it should not happen because Selims code checks wether an item exists before going on
+
+        JSONObject o = getMenuItemDetails(keyV); // <-- Pull the JSON data from the database
+        HashMap hm2 = Serializer.MenuItemInformation(o);// <-- Transfrom the JSON to usefull data, a hashmap in this case
 
     }
 
@@ -51,6 +59,28 @@ public class ApiController {
         return null;
     }
 
+    public JSONObject getMenuItemDetails(int id) {
+        String RequestedUrl = DEFAULT_URL + "/api/menu/" + id;
+        String result;
+        JSONObject jsonObject;
+        HttpRequest request = new HttpGetRequest();
+
+        try {
+            result = request.execute(RequestedUrl).get();
+            Object json = new JSONTokener(result).nextValue();
+            if(json instanceof JSONObject) {
+                jsonObject = new JSONObject(result);
+                return jsonObject;
+            }
+            else if (json instanceof JSONArray) {
+                return null;
+            }
+        } catch (Exception e ) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+  
     public JSONObject postOrder() {
         String RequestedUrl = DEFAULT_URL + "/api/orders/";
         String result;

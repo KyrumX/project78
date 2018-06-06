@@ -5,6 +5,7 @@ import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.os.Bundle;
 
+
 import java.sql.SQLOutput;
 import java.util.concurrent.TimeUnit;
 
@@ -31,6 +32,7 @@ import java.util.Locale;
 
 import team.smartwaiter.api.ApiController;
 import team.smartwaiter.api.Serializer;
+import team.smartwaiter.getInformation;
 
 public class ListenActivity extends Activity implements RecognitionListener, TextToSpeech.OnInitListener{
     private static TextView txtlisten;
@@ -195,6 +197,8 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
     }
 
 
+    }
+
     public boolean processMeal(List<String> typelist,  ArrayList<String> output){
 
         orderpairs.clear();
@@ -232,6 +236,35 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         }
 
 
+    }
+
+    public boolean checkForWord(List<String> output) {
+        List<String> list = Arrays.asList("info", "information");
+        for (String word : output) {
+            for (String i : list) {
+                if (word.toLowerCase().contains(i)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public Boolean requestInfo(List<String> typelist, List<String> output) {
+        String menuitem = "";
+        for (String item : typelist) {
+            for (String line : output) {
+                if (checkForWord(output) && line.toLowerCase().contains(item)) {
+                    menuitem = item.toLowerCase();
+                    speak("Showing the information on " + menuitem + " right now");
+                     txtlisten.setText(getInformation.showInformation(menuitem, "description"));
+                    return true;
+
+                }
+            }
+        }
+        speak("I can't seem to figure out what you said, please try again.");
+        return false;
     }
 
     public void reprompt(Integer sleepduration){
