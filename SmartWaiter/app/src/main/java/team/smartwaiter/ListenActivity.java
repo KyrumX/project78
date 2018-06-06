@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 import team.smartwaiter.api.ApiController;
+import team.smartwaiter.api.OrderProcessor;
 import team.smartwaiter.api.Serializer;
 import team.smartwaiter.getInformation;
 
@@ -46,8 +47,9 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
     private final int REQ_CODE_SPEECH_INPUT = 100;
 
     //VARS for processing orders
-    Hashtable orderpairs = new Hashtable<>();;
+    HashMap orderpairs = new HashMap();;
     ApiController controller = new ApiController();
+    OrderProcessor orderProcessor = new OrderProcessor();
 
     @Override
     protected void onCreate(Bundle state) {
@@ -170,12 +172,9 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
 
                     //Now that one orderline has been confirmed (e.g. 2 cola's) we need to push it to the db
 
-                    for (Object key : orderpairs.keySet()) {
-                        System.out.println("KEY: " + key);
-//                        controller.postOrderLine();
-//                        speakorder += orderpairs.get(key) + " " + key;
-//                        order += key + " | amount: " + orderpairs.get(key) + "\n";
-                    }
+                    orderProcessor.createNewOrderLine(orderpairs); // <-- Process all the ordered items
+
+                    //OrderLines have been processed.
 
                     txtlisten.setText("Order confirmed.");
                     break;
@@ -196,8 +195,6 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         }
     }
 
-
-    }
 
     public boolean processMeal(List<String> typelist,  ArrayList<String> output){
 

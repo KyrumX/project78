@@ -14,8 +14,8 @@ public class Logic {
         this.query = query;
     }
 
-    public Hashtable<String, String> generate(){
-        Hashtable<String, String> pairs = new Hashtable<>();
+    public HashMap<String, Integer> generate(){
+        HashMap<String, Integer> pairs = new HashMap<>();
         List<String> amount = Arrays.asList("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten");
 
         Hashtable<Integer, String> amounts = new Hashtable<>();
@@ -36,13 +36,13 @@ public class Logic {
                     if (i >= 1) {
                         int totalamount = getAmount(numberset, queryToList[i - 1], amounts);
                         if (currentword.contains(food) && totalamount == 0) {
-                            pairs.put(food, "1");
+                            pairs.put(food, 1);
                         } else if (currentword.contains(food) && totalamount != 0) {
-                            pairs.put(food, Integer.toString(totalamount));
+                            pairs.put(food, totalamount);
                         }
                     } else {
                         if (currentword.contains(food)) {
-                            pairs.put(food, "1");
+                            pairs.put(food, 1);
                         }
                     }
                 }
