@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 
+import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -25,13 +26,16 @@ import edu.cmu.pocketsphinx.SpeechRecognizer;
 import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
 import team.smartwaiter.api.ApiController;
 
+import static android.speech.tts.TextToSpeech.QUEUE_ADD;
+
 
 public class MainActivity extends Activity implements
-        RecognitionListener {
+        RecognitionListener{
 
     private final ApiController API = new ApiController();
 
     private static TextView txt;
+
 
     /* Named searches allow to quickly reconfigure the decoder */
     private static final String KWS_SEARCH = "wakeup";
@@ -51,12 +55,14 @@ public class MainActivity extends Activity implements
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
+        setContentView(R.layout.activity_main);
+
         txt = (TextView) findViewById(R.id.result_text);
 
 //        // Prepare the data for UI
         captions = new HashMap<>();
         captions.put(KWS_SEARCH, R.string.kws_caption);
-        setContentView(R.layout.activity_main);
+
 
         ((TextView) findViewById(R.id.caption_text))
                 .setText("Preparing the application");
@@ -71,6 +77,7 @@ public class MainActivity extends Activity implements
         // so we execute it in async task
         new SetupTask(this).execute();
     }
+
 
     private static class SetupTask extends AsyncTask<Void, Void, Exception> {
         WeakReference<MainActivity> activityReference;

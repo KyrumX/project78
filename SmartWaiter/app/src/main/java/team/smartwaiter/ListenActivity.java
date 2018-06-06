@@ -5,14 +5,24 @@ import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.os.Bundle;
 
+
+import java.sql.SQLOutput;
+import java.util.concurrent.TimeUnit;
+
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.*;
 
 import android.content.ActivityNotFoundException;
 
 import android.speech.RecognitionListener;
 import android.speech.SpeechRecognizer;
 
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.speech.RecognizerIntent;
 import android.content.Intent;
@@ -26,15 +36,35 @@ import team.smartwaiter.getInformation;
 
 public class ListenActivity extends Activity implements RecognitionListener, TextToSpeech.OnInitListener{
     private static TextView txtlisten;
+    private static boolean hasOrdered = false;
+    private static boolean hasConfirmed = false;
+    private static Button reorder;
+    private static Hashtable<String, Integer> orders = new Hashtable<String, Integer>();
     private TextToSpeech tts;
     final SpeechRecognizer speech = SpeechRecognizer.createSpeechRecognizer(this);
     final Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
     private final int REQ_CODE_SPEECH_INPUT = 100;
 
+    //VARS for processing orders
+    Hashtable orderpairs = new Hashtable<>();;
+    ApiController controller = new ApiController();
+
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         setContentView(R.layout.activity_listen);
+        reorder = (Button) findViewById(R.id.button2);
+        reorder.setVisibility(View.GONE);
+
+        reorder.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                hasOrdered = false;
+                Intent intent = getIntent();
+                finish();
+                startActivity(intent);
+            }
+        });
 
         tts = new TextToSpeech(this, this);
 
@@ -100,6 +130,7 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
     @Override
     public void onError(int i) {
         txtlisten.setText("I didn't quite catch that..");
+        reorder.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -117,84 +148,94 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         System.out.println(output);
 
         //List<String> food = Arrays.asList("burger", "rice", "spaghetti", "mixed grill", "soup", "steak", "salad", "macaroni");
-        ApiController controller = new ApiController();
         List<String> menu = null;
-        menu = Serializer.ConvertMenu(controller.getMenu());
-        for(String i : menu)
-            System.out.println(i);
-//        List<String> drinks = Arrays.asList("cola", "ice tea", "fanta", "lemonade", "chocolate milk");
+        menu = Serializer.ConvertMenu(controller.getMenu(), "name");
 
+        if (!hasOrdered) {
+            if (!processMeal(menu, matches)) {
+                // If order not complete, trying again here
+                System.out.println("Couldn't find item");
+                reprompt(7);
+            } else {
+                // If the order complete, asking for confirmation here
+                reprompt(5);
+            }
 
-        if (!processMeal(menu, matches)) {
-            System.out.println("Couldn't find item");
-        }else if(requestInfo(menu, matches)){
-            System.out.println("it worked");
+        } else {
+            System.out.println("is true");
+            for (String d : matches) {
+                if (d.toLowerCase().contains("yes") | d.toLowerCase().contains("yeah") | d.toLowerCase().contains("okay")) {
+                    reorder.setVisibility(View.VISIBLE);
+                    speak("Order confirmed.");
 
+                    //Now that one orderline has been confirmed (e.g. 2 cola's) we need to push it to the db
+
+                    for (Object key : orderpairs.keySet()) {
+                        System.out.println("KEY: " + key);
+//                        controller.postOrderLine();
+//                        speakorder += orderpairs.get(key) + " " + key;
+//                        order += key + " | amount: " + orderpairs.get(key) + "\n";
+                    }
+
+                    txtlisten.setText("Order confirmed.");
+                    break;
+                } else if (d.toLowerCase().contains("no") | d.toLowerCase().contains("nope")) {
+                    speak("Okay, order canceled.");
+                    reorder.setVisibility(View.VISIBLE);
+                    txtlisten.setText("Order canceled.");
+                    hasOrdered = false;
+//                    reprompt(10);
+                    break;
+                } else {
+                    speak("Sorry I didn't catch that, can you say that again?");
+                    txtlisten.setText("Didn't catch that, can you say that again?");
+                    reprompt(5);
+                    break;
+                }
+            }
         }
-
-
-
+    }
 
 
     }
 
     public boolean processMeal(List<String> typelist,  ArrayList<String> output){
 
-        List<String> amount = Arrays.asList("one", "two", "three", "four", "five");
-        List<String> amountnum = Arrays.asList("1", "2", "3", "4", "5");
-        String meal = "";
-        String totalamount = "";
+        orderpairs.clear();
 
-        boolean foundconsumable = false;
-        boolean foundamount = false;
+        Logic logic = new Logic(typelist, output);
+        orderpairs = logic.generate();
 
-        for (String line : output) {
-            if (foundconsumable && foundamount) {
-                String order = "Order: " + meal + " | amount: " + totalamount;
-                txtlisten.setText(order);
-                speak(totalamount + " " + meal + ". Confirm by saying yes.");
-                return true;
-            } else {
-                if (!foundconsumable) {
-                    for (String consumable : typelist) {
-                        if (line.toLowerCase().contains(consumable)) {
-                            meal = consumable;
-                            foundconsumable = true;
-                            break;
-                        }
-                    }
-                }
+        System.out.println(typelist);
+        System.out.println(orderpairs);
 
-                if (!foundamount) {
-                    for (String am : amount) {
-                        if (line.contains(am)) {
-                            totalamount = am;
-                            foundamount = true;
-                            break;
-                        }
-                    }
+        if(orderpairs.size() < 1){
+            txtlisten.setText("I didn't quite catch that");
+            speak("I can't seem to figure out what you said, please try again.");
+            return false;
+        } else {
+            Set<String> keys = orderpairs.keySet();
 
-                    for (String an : amountnum) {
-                        if (line.contains(an)) {
-                            totalamount = an;
-                            foundamount = true;
-                            break;
-                        }
-                    }
-                }
+            String order = "Order:\n";
+            String speakorder = "Your order consists of the following: ";
+
+            for (String key : keys) {
+//                System.out.println(orderpairs.get(key) + " " + key);
+                speakorder += orderpairs.get(key) + " " + key;
+                order += key + " | amount: " + orderpairs.get(key) + "\n";
             }
-        }
 
-        if (foundconsumable && !foundamount){
-            String order = "Order: " + meal + " | amount: one";
+            speakorder += ". Confirm by saying yes";
+
+            System.out.println("ORDERPAIRS: " + orderpairs);
             txtlisten.setText(order);
-            speak("One " + meal + ". Confirm by saying yes.");
+            speak(speakorder);
+            hasOrdered = true;
             return true;
+
         }
 
-        txtlisten.setText("I didn't quite catch that");
-        speak("I can't seem to figure out what you said, please try again.");
-        return false;
+
     }
 
     public boolean checkForWord(List<String> output) {
@@ -226,6 +267,14 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         return false;
     }
 
+    public void reprompt(Integer sleepduration){
+        try {
+            TimeUnit.SECONDS.sleep(sleepduration);
+            speech.startListening(intent);
+        } catch (InterruptedException e) {
+            System.out.println("Error from reprompt");
+        }
+    }
 
     @Override
     public void onPartialResults(Bundle bundle) {

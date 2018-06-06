@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Serializer {
-    public static ArrayList<String> ConvertMenu(JSONArray jsonArray) {
+    public static ArrayList<String> ConvertMenu(JSONArray jsonArray, String wantedValue) {
         ArrayList<String> l = new ArrayList<>();
 
         if(jsonArray == null)
@@ -16,7 +16,7 @@ public class Serializer {
 
         for(int i = 0; i < jsonArray.length(); i++) {
             try {
-                l.add(jsonArray.getJSONObject(i).get("name").toString());
+                l.add(jsonArray.getJSONObject(i).get(wantedValue).toString());
             } catch (JSONException e) {
                 e.printStackTrace();
             }

@@ -49,6 +49,8 @@ public class ApiController {
             }
             else if (json instanceof JSONArray) {
                 jsonArray = new JSONArray(result);
+                System.out.println("PRINTING JSON ARRAY--*");
+                System.out.println(jsonArray);
                 return jsonArray;
             }
         } catch (Exception e ) {
@@ -78,8 +80,8 @@ public class ApiController {
         }
         return null;
     }
-
-    public JSONObject test() {
+  
+    public JSONObject postOrder() {
         String RequestedUrl = DEFAULT_URL + "/api/orders/";
         String result;
         String params;
@@ -93,6 +95,34 @@ public class ApiController {
         String mydateStr = df.format(mydate);
 
         params = "tablenumber=666&datetime="+mydateStr+"";
+
+        try {
+            result = request.execute(RequestedUrl, params).get();
+            Object json = new JSONTokener(result).nextValue();
+            if(json instanceof JSONObject) {
+                jsonObject = new JSONObject(result);
+                System.out.println(jsonObject);
+                return jsonObject;
+            }
+            else if (json instanceof JSONArray) {
+                return null;
+            }
+        } catch (Exception e ) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public JSONObject postOrderLine(int amount, int id, int currentOrderID) {
+        String RequestedUrl = DEFAULT_URL + "/api/orderlines/";
+        String result;
+        String params;
+        JSONObject jsonObject;
+        HttpRequest request = new HttpPostRequest();
+
+        //Create parameters:
+        currentOrderID = 1;
+        params = "amount=" + amount + "&menuitem=" + id + "&orderid=" + currentOrderID;
 
         try {
             result = request.execute(RequestedUrl, params).get();
