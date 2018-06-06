@@ -43,6 +43,10 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
     final Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
     private final int REQ_CODE_SPEECH_INPUT = 100;
 
+    //VARS for processing orders
+    Hashtable orderpairs = new Hashtable<>();;
+    ApiController controller = new ApiController();
+
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -142,7 +146,6 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         System.out.println(output);
 
         //List<String> food = Arrays.asList("burger", "rice", "spaghetti", "mixed grill", "soup", "steak", "salad", "macaroni");
-        ApiController controller = new ApiController();
         List<String> menu = null;
         menu = Serializer.ConvertMenu(controller.getMenu(), "name");
 
@@ -162,6 +165,16 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
                 if (d.toLowerCase().contains("yes") | d.toLowerCase().contains("yeah") | d.toLowerCase().contains("okay")) {
                     reorder.setVisibility(View.VISIBLE);
                     speak("Order confirmed.");
+
+                    //Now that one orderline has been confirmed (e.g. 2 cola's) we need to push it to the db
+
+                    for (Object key : orderpairs.keySet()) {
+                        System.out.println("KEY: " + key);
+//                        controller.postOrderLine();
+//                        speakorder += orderpairs.get(key) + " " + key;
+//                        order += key + " | amount: " + orderpairs.get(key) + "\n";
+                    }
+
                     txtlisten.setText("Order confirmed.");
                     break;
                 } else if (d.toLowerCase().contains("no") | d.toLowerCase().contains("nope")) {
@@ -184,7 +197,7 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
 
     public boolean processMeal(List<String> typelist,  ArrayList<String> output){
 
-        Hashtable orderpairs = new Hashtable<>();
+        orderpairs.clear();
 
         Logic logic = new Logic(typelist, output);
         orderpairs = logic.generate();
