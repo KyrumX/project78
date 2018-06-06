@@ -146,13 +146,6 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         List<String> menu = null;
         menu = Serializer.ConvertMenu(controller.getMenu(), "name");
 
-//        System.out.println("Printing menu items -------------------");
-//        for (String b : menu) {
-//            System.out.println(b);
-//        }
-
-//       List<String> drinks = Arrays.asList("cola", "ice tea", "fanta", "lemonade", "chocolate milk");
-
         if (!hasOrdered) {
             if (!processMeal(menu, matches)) {
                 // If order not complete, trying again here
@@ -190,154 +183,42 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
 
 
     public boolean processMeal(List<String> typelist,  ArrayList<String> output){
-        List<String> orderlist = new ArrayList<>();
-        List<String> orderamounts = new ArrayList<>();
+
         Hashtable orderpairs = new Hashtable<>();
 
-        List<String> amount = Arrays.asList("one", "two", "three", "four", "five");
-        List<String> amountnum = Arrays.asList("1", "2", "3", "4", "5");
-        String meal = "";
-        String totalamount = "";
+        Logic logic = new Logic(typelist, output);
+        orderpairs = logic.generate();
 
-        boolean foundconsumable = false;
-        boolean foundamount = false;
+        System.out.println(typelist);
+        System.out.println(orderpairs);
 
-        for (String line : output) {
-//                System.out.println("LINE: " + line);
-                if (foundconsumable && orderamounts.size() == orderlist.size()) {
-                    System.out.println("foundboth");
+        if(orderpairs.size() < 1){
+            txtlisten.setText("I didn't quite catch that");
+            speak("I can't seem to figure out what you said, please try again.");
+            return false;
+        } else {
+            Set<String> keys = orderpairs.keySet();
 
-                    System.out.println("PRINTING ORDERLIST_________________________________");
-                    System.out.println(orderlist);
-                    System.out.println("END ORDERLIST______________________________________*");
+            String order = "Order:\n";
+            String speakorder = "Your order consists of the following: ";
 
+            for (String key : keys) {
+//                System.out.println(orderpairs.get(key) + " " + key);
+                speakorder += orderpairs.get(key) + " " + key;
+                order += key + " | amount: " + orderpairs.get(key) + "\n";
+            }
 
-                    System.out.println("PRINTING ORDERAMOUNTS_______________________________");
-                    System.out.println(orderamounts);
-                    System.out.println("END ORDERAMOUNTS____________________________________*");
+            speakorder += ". Confirm by saying yes";
 
-
-                    if (orderlist.size() > 1) {
-                        System.out.println("SIZE OF ORDERLIST = " + orderlist.size());
-                        System.out.println("_____________________________________");
-                        System.out.println("PRINTING ITEMS AND AMOUNTS");
-                        for (int i = 0; i <= orderlist.size() - 1; i++) {
-                            System.out.println("food " + orderlist.get(i));
-                            System.out.println("amount " + orderamounts.get(i));
-                            orderpairs.put(orderlist.get(i), orderamounts.get(i));
-                        }
-
-                        Set<String> keys = orderpairs.keySet();
-
-                        String order = "Order:\n";
-                        String speakorder = "Your order consists of the following: ";
-
-                        for (String key : keys) {
-                            System.out.println(orderpairs.get(key) + " " + key);
-                            speakorder += orderpairs.get(key) + " " + key;
-                            order += key + " | amount: " + orderpairs.get(key) + "\n";
-                        }
-
-                        speakorder += ". Confirm by saying yes";
-
-                        System.out.println("ORDERPAIRS: " + orderpairs);
-                        txtlisten.setText(order);
-                        speak(speakorder);
-                        hasOrdered = true;
-                        return true;
-
-
-                    }
-
-//                    System.out.println("PRINTING ORDERAMOUNTS");
-//                    for (String oa : orderamounts) {
-//                        System.out.println(oa);
-//                    }
-
-//                orders.put(meal, Integer.parseInt(totalamount));
-
-                    String order = "Order: " + meal + " | amount: " + totalamount;
-                    txtlisten.setText(order);
-                    speak(totalamount + " " + meal + ". Confirm by saying yes.");
-                    hasOrdered = true;
-                    return true;
-                } else {
-                    if (!foundconsumable) {
-                        for (String word : line.split(" ")) {
-                            for (String consumable : typelist) {
-                                if (word.toLowerCase().contains(consumable)) {
-                                    meal = consumable;
-                                    orderlist.add(consumable);
-                                    if (!foundconsumable) {
-                                        foundconsumable = true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                        for (String word : line.split(" ")) {
-                            for (String am : amount) {
-                                if (word.contains(am)) {
-                                    totalamount = am;
-                                    orderamounts.add(am);
-                                }
-                            }
-                        }
-                        for (String word : line.split(" ")) {
-                            for (String an : amountnum) {
-                                if (word.contains(an)) {
-                                    totalamount = an;
-                                    orderamounts.add(an);
-                                }
-                            }
-                        }
-                    }
-                }
-
-        if (foundconsumable && orderlist.size() != orderamounts.size()){
-            System.out.println("Found foods but no amount");
-            if (orderlist.size() > 1) {
-                System.out.println("SIZE OF ORDERLIST = " + orderlist.size());
-                for (int i = 0; i <= orderlist.size() - 1; i++) {
-                    System.out.println("food " + orderlist.get(i));
-//                    System.out.println("amount " + orderamounts.get(i));
-                    orderpairs.put(orderlist.get(i), "one");
-                }
-
-                Set<String> keys = orderpairs.keySet();
-
-                String order = "Order:\n";
-                String speakorder = "Your order consists of the following: ";
-
-                for (String key : keys) {
-                    System.out.println(orderpairs.get(key) + " " + key);
-                    speakorder += orderpairs.get(key) + " " + key;
-                    order += key + " | amount: " + orderpairs.get(key) + "\n";
-                }
-
-                speakorder += ". Confirm by saying yes";
-
-                System.out.println("ORDERPAIRS: " + orderpairs);
-                txtlisten.setText(order);
-                speak(speakorder);
-                hasOrdered = true;
-                return true;
-
-            } else {
-                
-            String order = "Order: " + meal + " | amount: one";
+            System.out.println("ORDERPAIRS: " + orderpairs);
             txtlisten.setText(order);
-            speak("One " + meal + ". Confirm by saying yes.");
+            speak(speakorder);
             hasOrdered = true;
             return true;
-            }
+
         }
 
 
-        txtlisten.setText("I didn't quite catch that");
-        speak("I can't seem to figure out what you said, please try again.");
-        return false;
     }
 
     public void reprompt(Integer sleepduration){
