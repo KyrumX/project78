@@ -6,8 +6,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-
-import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -25,8 +23,6 @@ import edu.cmu.pocketsphinx.RecognitionListener;
 import edu.cmu.pocketsphinx.SpeechRecognizer;
 import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
 import team.smartwaiter.api.ApiController;
-
-import static android.speech.tts.TextToSpeech.QUEUE_ADD;
 
 
 public class MainActivity extends Activity implements
@@ -225,7 +221,7 @@ public class MainActivity extends Activity implements
 
 
     //Aarons API tester button :)
-    public void TestLogger(View v) throws IOException {
+    public void TestLogger(View v) {
         API.Print();
     }
 }
