@@ -55,4 +55,18 @@ public class Serializer {
 
         return hm;
     }
+
+    public static int OrderID(JSONObject jsonObject) {
+        int orderID = -1;
+
+        if(jsonObject == null)
+            return orderID;
+        try {
+            orderID = (int) jsonObject.get("id");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return orderID;
+    }
 }

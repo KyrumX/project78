@@ -23,10 +23,16 @@ import edu.cmu.pocketsphinx.RecognitionListener;
 import edu.cmu.pocketsphinx.SpeechRecognizer;
 import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
 import team.smartwaiter.api.ApiController;
+import team.smartwaiter.storage.OrderDataSingleton;
 
 
 public class MainActivity extends Activity implements
         RecognitionListener{
+
+    public MainActivity() {
+        OrderDataSingleton orderDataSingleton = OrderDataSingleton.getInstance();
+        orderDataSingleton.update();
+    }
 
     private final ApiController API = new ApiController();
 
