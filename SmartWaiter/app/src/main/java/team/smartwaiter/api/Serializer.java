@@ -49,6 +49,8 @@ public class Serializer {
             hm.put("name", jsonObject.get("name").toString());
             hm.put("allergy", jsonObject.get("allergy").toString());
             hm.put("description", jsonObject.get("description").toString());
+            hm.put("price", jsonObject.get("price").toString());
+            hm.put("type", jsonObject.get("type").toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }

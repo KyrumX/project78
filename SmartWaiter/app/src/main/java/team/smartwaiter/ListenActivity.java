@@ -38,8 +38,10 @@ import team.smartwaiter.getInformation;
 public class ListenActivity extends Activity implements RecognitionListener, TextToSpeech.OnInitListener{
     private static TextView txtlisten;
     private static boolean hasOrdered = false;
-    private static boolean hasConfirmed = false;
+    private static boolean haspromptedinfo = false;
+    private static Intent intentmenu;
     private static Button reorder;
+    private static Button backtomenu;
     private static Hashtable<String, Integer> orders = new Hashtable<String, Integer>();
     private TextToSpeech tts;
     final SpeechRecognizer speech = SpeechRecognizer.createSpeechRecognizer(this);
@@ -47,7 +49,7 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
     private final int REQ_CODE_SPEECH_INPUT = 100;
 
     //VARS for processing orders
-    HashMap orderpairs = new HashMap();;
+    HashMap orderpairs = new HashMap();
     ApiController controller = new ApiController();
     OrderProcessor orderProcessor = new OrderProcessor();
 
@@ -55,6 +57,20 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         setContentView(R.layout.activity_listen);
+
+        intentmenu = new Intent(this, MainActivity.class);
+
+        backtomenu = (Button) findViewById(R.id.button3);
+        backtomenu.setVisibility(View.GONE);
+
+        backtomenu.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                intentmenu.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity ( intentmenu );
+            }
+        });
+
         reorder = (Button) findViewById(R.id.button2);
         reorder.setVisibility(View.GONE);
 
@@ -153,17 +169,25 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         List<String> menu = null;
         menu = Serializer.ConvertMenu(controller.getMenu(), "name");
 
-        if (!hasOrdered) {
-            if (!processMeal(menu, matches)) {
-                // If order not complete, trying again here
-                System.out.println("Couldn't find item");
-                reprompt(7);
-            } else {
-                // If the order complete, asking for confirmation here
-                reprompt(5);
-            }
 
+
+        if (!hasOrdered) {
+            if (hasInfo(menu, matches)) {
+                System.out.println("has info !!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            } else {
+                System.out.println("doesn't have info");
+                if (!processMeal(menu, matches)) {
+                    // If order not complete, trying again here
+                    System.out.println("Couldn't find item");
+                    reprompt(7);
+                } else {
+                    // If the order complete, asking for confirmation here
+                    reprompt(5);
+                }
+            }
         } else {
+            if (hasInfo(menu, matches))
+                System.out.println("has info .....");
             System.out.println("is true");
             for (String d : matches) {
                 if (d.toLowerCase().contains("yes") | d.toLowerCase().contains("yeah") | d.toLowerCase().contains("okay")) {
@@ -236,7 +260,7 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
     }
 
     public boolean checkForWord(List<String> output) {
-        List<String> list = Arrays.asList("info", "information");
+        List<String> list = Arrays.asList("info", "information", "allergy", "allergies", "know");
         for (String word : output) {
             for (String i : list) {
                 if (word.toLowerCase().contains(i)) {
@@ -247,14 +271,32 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         return false;
     }
 
-    public Boolean requestInfo(List<String> typelist, List<String> output) {
+    public Boolean hasInfo(List<String> typelist, List<String> output) {
         String menuitem = "";
         for (String item : typelist) {
             for (String line : output) {
                 if (checkForWord(output) && line.toLowerCase().contains(item)) {
                     menuitem = item.toLowerCase();
-                    speak("Showing the information on " + menuitem + " right now");
-                     txtlisten.setText(getInformation.showInformation(menuitem, "description"));
+
+                    System.out.println("CHECKFORWORD PASSED");
+
+                    if (getInformation.showInformation(menuitem, "allergy").equals("none")){
+                        speak(menuitem + " contains no potential allergy substances");
+                        txtlisten.setText("No allergies inside " + menuitem);
+                        backtomenu.setVisibility(View.VISIBLE);
+                        System.out.println("in the if");
+                    } else{
+                        System.out.println("in the else");
+                        haspromptedinfo = true;
+                        backtomenu.setVisibility(View.VISIBLE);
+                        speak(menuitem + " " + getInformation.showInformation(menuitem, "allergy"));
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            System.out.println(e);
+                        }
+                        txtlisten.setText(menuitem + " " + getInformation.showInformation(menuitem, "allergy"));
+                    }
                     return true;
 
                 }
