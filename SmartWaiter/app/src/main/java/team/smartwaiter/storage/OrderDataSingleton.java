@@ -6,8 +6,8 @@ import team.smartwaiter.api.Serializer;
 public class OrderDataSingleton {
     private static OrderDataSingleton single_instance = new OrderDataSingleton();
 
-    public boolean constructedOrder = false;
-    public int orderID;
+    private boolean constructedOrder = false;
+    private int orderID;
 
     private static ApiController controller = new ApiController();
 
@@ -30,12 +30,13 @@ public class OrderDataSingleton {
     public void receiveOrderID() {
         orderID = Serializer.OrderID(controller.postOrder());
 
-        System.out.println(orderID);
+        constructedOrder = true;
     }
 
     public void update() {
         if (!constructedOrder) {
             receiveOrderID();
         }
+        System.out.println(orderID);
     }
 }

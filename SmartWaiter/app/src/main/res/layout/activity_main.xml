@@ -33,31 +33,10 @@
     <RelativeLayout
         android:layout_width="344dp"
         android:layout_height="41dp"
-        tools:layout_editor_absoluteX="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
         tools:layout_editor_absoluteY="2dp">
-
-        <EditText
-            android:id="@+id/plaintext_orderid"
-            android:layout_width="75dp"
-            android:layout_height="40dp"
-            android:layout_alignParentEnd="true"
-            android:layout_marginEnd="26dp"
-            android:ems="10"
-            android:inputType="textPersonName"
-            tools:layout_editor_absoluteX="53dp"
-            tools:layout_editor_absoluteY="0dp" />
-
-        <EditText
-            android:id="@+id/plaintext_orderid_prefix"
-            android:layout_width="71dp"
-            android:layout_height="40dp"
-            android:layout_alignParentEnd="true"
-            android:layout_marginEnd="101dp"
-            android:ems="10"
-            android:inputType="textPersonName"
-            android:text="Order:"
-            tools:layout_editor_absoluteX="0dp"
-            tools:layout_editor_absoluteY="0dp" />
 
         <Button
             android:id="@+id/button"
@@ -67,6 +46,23 @@
             android:text="Test api"
             tools:layout_editor_absoluteX="0dp"
             tools:layout_editor_absoluteY="0dp" />
+
+        <TextView
+            android:id="@+id/orderTextView"
+            android:layout_width="85dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="92dp"
+            android:text="Order:"
+            android:textSize="24sp" />
+
+        <TextView
+            android:id="@+id/idTextView"
+            android:layout_width="82dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="-92dp"
+            android:layout_toEndOf="@+id/orderTextView"
+            android:textSize="24sp" />
     </RelativeLayout>
 
 </android.support.constraint.ConstraintLayout>

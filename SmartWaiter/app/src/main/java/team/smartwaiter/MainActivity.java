@@ -30,13 +30,13 @@ public class MainActivity extends Activity implements
         RecognitionListener{
 
     public MainActivity() {
-        OrderDataSingleton orderDataSingleton = OrderDataSingleton.getInstance();
         orderDataSingleton.update();
     }
 
     private final ApiController API = new ApiController();
 
-    private static TextView txt;
+    private TextView orderTextView, idTextView, txt;
+    OrderDataSingleton orderDataSingleton = OrderDataSingleton.getInstance();
 
 
     /* Named searches allow to quickly reconfigure the decoder */
@@ -59,6 +59,8 @@ public class MainActivity extends Activity implements
         super.onCreate(state);
         setContentView(R.layout.activity_main);
 
+        idTextView = (TextView) findViewById(R.id.idTextView);
+        idTextView.setText(Integer.toString(orderDataSingleton.getOrderID()));
         txt = (TextView) findViewById(R.id.result_text);
 
 //        // Prepare the data for UI

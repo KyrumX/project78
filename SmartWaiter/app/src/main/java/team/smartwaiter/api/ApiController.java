@@ -123,7 +123,6 @@ public class ApiController {
         HttpRequest request = new HttpPostRequest();
 
         //Create parameters:
-        currentOrderID = 1;
         params = "amount=" + amount + "&menuitem=" + id + "&orderid=" + currentOrderID;
 
         try {
