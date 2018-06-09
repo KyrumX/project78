@@ -49,10 +49,26 @@ public class Serializer {
             hm.put("name", jsonObject.get("name").toString());
             hm.put("allergy", jsonObject.get("allergy").toString());
             hm.put("description", jsonObject.get("description").toString());
+            hm.put("price", jsonObject.get("price").toString());
+            hm.put("type", jsonObject.get("type").toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
         return hm;
+    }
+
+    public static int OrderID(JSONObject jsonObject) {
+        int orderID = -1;
+
+        if(jsonObject == null)
+            return orderID;
+        try {
+            orderID = (int) jsonObject.get("id");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return orderID;
     }
 }

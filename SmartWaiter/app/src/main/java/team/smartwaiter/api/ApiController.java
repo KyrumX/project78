@@ -114,6 +114,8 @@ public class ApiController {
     }
 
     public JSONObject postOrderLine(int amount, int id, int currentOrderID) {
+        //TODO: [AARON] Change order functionality
+
         String RequestedUrl = DEFAULT_URL + "/api/orderlines/";
         String result;
         String params;
@@ -121,7 +123,6 @@ public class ApiController {
         HttpRequest request = new HttpPostRequest();
 
         //Create parameters:
-        currentOrderID = 1;
         params = "amount=" + amount + "&menuitem=" + id + "&orderid=" + currentOrderID;
 
         try {

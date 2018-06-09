@@ -6,8 +6,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-
-import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -25,16 +23,20 @@ import edu.cmu.pocketsphinx.RecognitionListener;
 import edu.cmu.pocketsphinx.SpeechRecognizer;
 import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
 import team.smartwaiter.api.ApiController;
-
-import static android.speech.tts.TextToSpeech.QUEUE_ADD;
+import team.smartwaiter.storage.OrderDataSingleton;
 
 
 public class MainActivity extends Activity implements
         RecognitionListener{
 
+    public MainActivity() {
+        orderDataSingleton.update();
+    }
+
     private final ApiController API = new ApiController();
 
-    private static TextView txt;
+    private TextView orderTextView, idTextView, txt;
+    OrderDataSingleton orderDataSingleton = OrderDataSingleton.getInstance();
 
 
     /* Named searches allow to quickly reconfigure the decoder */
@@ -57,6 +59,8 @@ public class MainActivity extends Activity implements
         super.onCreate(state);
         setContentView(R.layout.activity_main);
 
+        idTextView = (TextView) findViewById(R.id.idTextView);
+        idTextView.setText(Integer.toString(orderDataSingleton.getOrderID()));
         txt = (TextView) findViewById(R.id.result_text);
 
 //        // Prepare the data for UI
@@ -225,7 +229,7 @@ public class MainActivity extends Activity implements
 
 
     //Aarons API tester button :)
-    public void TestLogger(View v) throws IOException {
+    public void TestLogger(View v) {
         API.Print();
     }
 }

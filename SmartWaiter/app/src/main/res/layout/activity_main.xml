@@ -30,13 +30,39 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:onClick="TestLogger"
-        android:text="Test api"
-        tools:layout_editor_absoluteX="16dp"
-        tools:layout_editor_absoluteY="16dp" />
+    <RelativeLayout
+        android:layout_width="344dp"
+        android:layout_height="41dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:layout_editor_absoluteY="2dp">
+
+        <Button
+            android:id="@+id/button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="TestLogger"
+            android:text="Test api"
+            tools:layout_editor_absoluteX="0dp"
+            tools:layout_editor_absoluteY="0dp" />
+
+        <TextView
+            android:id="@+id/orderTextView"
+            android:layout_width="85dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="92dp"
+            android:text="Order:"
+            android:textSize="24sp" />
+
+        <TextView
+            android:id="@+id/idTextView"
+            android:layout_width="82dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="-92dp"
+            android:layout_toEndOf="@+id/orderTextView"
+            android:textSize="24sp" />
+    </RelativeLayout>
 
 </android.support.constraint.ConstraintLayout>
