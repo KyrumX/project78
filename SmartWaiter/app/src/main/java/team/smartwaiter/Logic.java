@@ -24,21 +24,28 @@ public class Logic {
         }
 
         Set<Integer> numberset = amounts.keySet();
-
+        System.out.println("query: " + query);
         for (String line : query) {
             String[] queryToList = line.toLowerCase().split(" ");
-
             // This is the first check to find any food without any amount indicator and add it|them directly
             for (int i = 0; i < queryToList.length; i++) {
                 String currentword = queryToList[i];
-                System.out.println(currentword);
                 for (String food : this.foodlist) {
                     if (i >= 1) {
-                        int totalamount = getAmount(numberset, queryToList[i - 1], amounts);
-                        if (currentword.contains(food) && totalamount == 0) {
-                            pairs.put(food, 1);
-                        } else if (currentword.contains(food) && totalamount != 0) {
-                            pairs.put(food, totalamount);
+                        String combinedword = queryToList[i-1] + " " + queryToList[i];
+                        int totalamount = (combinedword.equals(food)) ? getAmount(numberset, queryToList[i - 2], amounts) : getAmount(numberset, queryToList[i - 1], amounts);
+                        if(combinedword.equals(food)){
+                            if(totalamount == 0){
+                                pairs.put(food, 1) ;
+                            } else {
+                                pairs.put(food, totalamount);
+                            }
+                        } else {
+                            if (currentword.contains(food) && totalamount == 0) {
+                                pairs.put(food, 1);
+                            } else if (currentword.contains(food) && totalamount != 0) {
+                                pairs.put(food, totalamount);
+                            }
                         }
                     } else {
                         if (currentword.contains(food)) {
