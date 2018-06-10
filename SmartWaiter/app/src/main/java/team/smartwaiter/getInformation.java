@@ -25,7 +25,9 @@ public class getInformation {
 
     public static String showInformation(String input, String n) {
         JSONObject o = apiController.getMenuItemDetails(getData(input));
+        System.out.println(o);
         HashMap hm2 = Serializer.MenuItemInformation(o);
+        System.out.println(hm2);
         String value = hm2.get(n).toString();
         return value;
     }

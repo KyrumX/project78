@@ -6,13 +6,10 @@ import android.speech.tts.TextToSpeech;
 import android.os.Bundle;
 
 
-import java.sql.SQLOutput;
 import java.util.concurrent.TimeUnit;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Hashtable;
 import java.util.HashMap;
 import java.util.*;
 
@@ -33,16 +30,14 @@ import java.util.Locale;
 import team.smartwaiter.api.ApiController;
 import team.smartwaiter.api.OrderProcessor;
 import team.smartwaiter.api.Serializer;
-import team.smartwaiter.getInformation;
+import team.smartwaiter.tools.GeneralTools;
 
 public class ListenActivity extends Activity implements RecognitionListener, TextToSpeech.OnInitListener{
-    private static TextView txtlisten;
+    private TextView txtlisten;
     private static boolean hasOrdered = false;
-    private static boolean haspromptedinfo = false;
     private static Intent intentmenu;
-    private static Button reorder;
-    private static Button backtomenu;
-    private static Hashtable<String, Integer> orders = new Hashtable<String, Integer>();
+    private Button reorder;
+    private Button backtomenu;
     private TextToSpeech tts;
     final SpeechRecognizer speech = SpeechRecognizer.createSpeechRecognizer(this);
     final Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -60,7 +55,7 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
 
         intentmenu = new Intent(this, MainActivity.class);
 
-        backtomenu = (Button) findViewById(R.id.button3);
+        backtomenu = findViewById(R.id.button3);
         backtomenu.setVisibility(View.GONE);
 
         backtomenu.setOnClickListener(new View.OnClickListener(){
@@ -71,7 +66,7 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
             }
         });
 
-        reorder = (Button) findViewById(R.id.button2);
+        reorder = findViewById(R.id.button2);
         reorder.setVisibility(View.GONE);
 
         reorder.setOnClickListener(new View.OnClickListener(){
@@ -95,12 +90,12 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
 
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
 
-        txtlisten = (TextView) findViewById(R.id.txtlisten);
+        txtlisten = findViewById(R.id.txtlisten);
 
         try {
             speech.startListening(intent);
         } catch (ActivityNotFoundException a) {
-
+            System.out.println("activity not found exception");
         }
     }
 
@@ -112,7 +107,6 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
             case REQ_CODE_SPEECH_INPUT: {
                 if (resultCode == RESULT_OK && null != data) {
                     ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-//                    txtlisten.setText(result.get(0));
                 }
                 break;
             }
@@ -159,17 +153,9 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         final String output = matches.get(0).toLowerCase();
         System.out.println("Output: " + output);
 
-        for (String x : matches) {
-            System.out.println(x);
-        }
-
-        System.out.println(output);
-
         //List<String> food = Arrays.asList("burger", "rice", "spaghetti", "mixed grill", "soup", "steak", "salad", "macaroni");
-        List<String> menu = null;
+        List<String> menu;
         menu = Serializer.ConvertMenu(controller.getMenu(), "name");
-
-
 
         if (!hasOrdered) {
             if (hasInfo(menu, matches)) {
@@ -186,35 +172,28 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
                 }
             }
         } else {
-            if (hasInfo(menu, matches))
-                System.out.println("has info .....");
-            System.out.println("is true");
-            for (String d : matches) {
-                if (d.toLowerCase().contains("yes") | d.toLowerCase().contains("yeah") | d.toLowerCase().contains("okay")) {
-                    reorder.setVisibility(View.VISIBLE);
-                    speak("Order confirmed.");
+            List<String> confirmationlist = Arrays.asList("yes", "yeah", "sure", "alright", "okay", "affirmative");
+            List<String> denylist = Arrays.asList("no", "nope", "nah", "not", "cancel");
 
-                    //Now that one orderline has been confirmed (e.g. 2 cola's) we need to push it to the db
+            if (GeneralTools.checkForWords(matches, confirmationlist) != "null"){
+                reorder.setVisibility(View.VISIBLE);
+                speak("Order confirmed.");
 
-                    orderProcessor.createNewOrderLine(orderpairs); // <-- Process all the ordered items
+                //Now that one orderline has been confirmed (e.g. 2 cola's) we need to push it to the db
+                orderProcessor.createNewOrderLine(orderpairs); // <-- Process all the ordered items
 
-                    //OrderLines have been processed.
+                //OrderLines have been processed.
 
-                    txtlisten.setText("Order confirmed.");
-                    break;
-                } else if (d.toLowerCase().contains("no") | d.toLowerCase().contains("nope")) {
-                    speak("Okay, order canceled.");
-                    reorder.setVisibility(View.VISIBLE);
-                    txtlisten.setText("Order canceled.");
-                    hasOrdered = false;
-//                    reprompt(10);
-                    break;
-                } else {
-                    speak("Sorry I didn't catch that, can you say that again?");
-                    txtlisten.setText("Didn't catch that, can you say that again?");
-                    reprompt(5);
-                    break;
-                }
+                txtlisten.setText("Order confirmed.");
+            } else if(GeneralTools.checkForWords(matches, denylist) != "null"){
+                speak("Okay, order canceled.");
+                reorder.setVisibility(View.VISIBLE);
+                txtlisten.setText("Order canceled.");
+                hasOrdered = false;
+            } else {
+                speak("Sorry I didn't catch that, can you say that again?");
+                txtlisten.setText("Didn't catch that, can you say that again?");
+                reprompt(5);
             }
         }
     }
@@ -227,8 +206,8 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         Logic logic = new Logic(typelist, output);
         orderpairs = logic.generate();
 
-        System.out.println(typelist);
-        System.out.println(orderpairs);
+        System.out.println("typelist: " + typelist);
+        System.out.println("orderpairs: " + orderpairs);
 
         if(orderpairs.size() < 1){
             txtlisten.setText("I didn't quite catch that");
@@ -253,56 +232,48 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
             speak(speakorder);
             hasOrdered = true;
             return true;
-
         }
-
-
     }
 
-    public boolean checkForWord(List<String> output) {
-        List<String> list = Arrays.asList("info", "information", "allergy", "allergies", "know");
-        for (String word : output) {
-            for (String i : list) {
-                if (word.toLowerCase().contains(i)) {
-                    return true;
-                }
-            }
+    public Boolean hasInfo(List<String> consumables, List<String> output) {
+        List<String> generalinfolist = Arrays.asList("description", "information", "info", "about");
+        List<String> price = Arrays.asList("price", "cost");
+        List<String> allergies = Arrays.asList("allergy", "allergies", "allergic");
+
+        String menuitem = GeneralTools.checkForWords(output, consumables);
+
+        if (menuitem == "null"){
+            // couldn't find a menuitem in the output
+            speak("I can't seem to figure out what you said, please try again.");
+            return false;
         }
-        return false;
-    }
 
-    public Boolean hasInfo(List<String> typelist, List<String> output) {
-        String menuitem = "";
-        for (String item : typelist) {
-            for (String line : output) {
-                if (checkForWord(output) && line.toLowerCase().contains(item)) {
-                    menuitem = item.toLowerCase();
-
-                    System.out.println("CHECKFORWORD PASSED");
-
-                    if (getInformation.showInformation(menuitem, "allergy").equals("none")){
-                        speak(menuitem + " contains no potential allergy substances");
-                        txtlisten.setText("No allergies inside " + menuitem);
-                        backtomenu.setVisibility(View.VISIBLE);
-                        System.out.println("in the if");
-                    } else{
-                        System.out.println("in the else");
-                        haspromptedinfo = true;
-                        backtomenu.setVisibility(View.VISIBLE);
-                        speak(menuitem + " " + getInformation.showInformation(menuitem, "allergy"));
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            System.out.println(e);
-                        }
-                        txtlisten.setText(menuitem + " " + getInformation.showInformation(menuitem, "allergy"));
-                    }
-                    return true;
-
-                }
+        String generalinfo;
+        String infotype;
+        if ((generalinfo = GeneralTools.checkForWords(output, generalinfolist, true)) != "null") {
+            // user asks for description of a product
+            System.out.println("debug hasinfo_____________________");
+            System.out.println(generalinfo);
+            System.out.println(menuitem);
+            System.out.println("end debug hasinfo_________________");
+            showinfo(generalinfo, menuitem);
+            return true;
+        } else if ((infotype = (GeneralTools.checkForWords(output, price, true))) != "null") {
+            // user asks for the price of a product
+            showinfo(infotype, menuitem, "The price of " + menuitem + " is ", "euros", "€");
+            return true;
+        } else if ((infotype = (GeneralTools.checkForWords(output, allergies, true))) != "null") {
+            // user asks about potential allergy substances in a product
+            if (getInformation.showInformation(menuitem, "allergy").equals("none")) {
+                speak(menuitem + " contains no potential allergy substances");
+                txtlisten.setText("No allergies inside " + menuitem);
+                backtomenu.setVisibility(View.VISIBLE);
+            } else {
+                showinfo(infotype, menuitem, menuitem + " ");
             }
+            return true;
         }
-        speak("I can't seem to figure out what you said, please try again.");
+
         return false;
     }
 
@@ -341,6 +312,27 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         }else{
             tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
         }
+    }
+
+    public void showinfo(String infotype, String menuitem, String... args){
+        String prefix =  (args.length == 0) ? "" : args[0];
+        String suffix = (args.length < 2) ? "" : args[1];
+        String prefix_text = (args.length < 3) ? "" : args[2];
+
+        backtomenu.setVisibility(View.VISIBLE);
+
+        if (suffix.equals("euros")){
+            speak(prefix + GeneralTools.outputMoney(getInformation.showInformation(menuitem, infotype)));
+        } else {
+            speak(prefix + getInformation.showInformation(menuitem, infotype));
+        }
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            System.out.println(e);
+        }
+        txtlisten.setText(GeneralTools.capitalize(menuitem) + "\n\n" + prefix_text + getInformation.showInformation(menuitem, infotype));
     }
 
 }
