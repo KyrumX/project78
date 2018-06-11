@@ -5,8 +5,6 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.view.View;
-
-import java.sql.SQLOutput;
 import java.util.List;
 
 public class GeneralTools {
@@ -94,5 +92,11 @@ public class GeneralTools {
             }
         });
         mAnimationSet.start();
+    }
+
+    public static void animateTxt(TypeWriter tw, String txt){
+        tw.setText("");
+        tw.setCharacterDelay(40);
+        tw.animateText(txt);
     }
 }

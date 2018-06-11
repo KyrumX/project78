@@ -83,21 +83,14 @@ public class MainActivity extends Activity implements
         super.onCreate(state);
         setContentView(R.layout.activity_main);
 
-//        i = new TextToSpeechInitializer(this, Locale.US, this);
-
         final TextToSpeechIniListener ini = this;
+
+        i = new TextToSpeechInitializer(this, Locale.US, this);
 
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
-//                tts = new TextToSpeech(context, volatileOnInitListener);
                 i = new TextToSpeechInitializer(getApplicationContext(), Locale.US, ini);
-//                tts = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
-//                    @Override
-//                    public void onInit(int i) {
-//                        tts.setLanguage(Locale.US);
-//                    }
-//                });
             }
         });
 
@@ -125,9 +118,6 @@ public class MainActivity extends Activity implements
         introText = findViewById(R.id.caption_text);
         introText.setTypeface(roboto);
 
-//        Fade animator = new Fade(introText, test, 100);
-//        animator.startAnimation();
-
 //        ((TextView) findViewById(R.id.caption_text))
 //                .setText("Preparing the application");
 
@@ -143,22 +133,15 @@ public class MainActivity extends Activity implements
     }
 
     @Override
-    public void onSucces(TextToSpeech tts) {
+    public void onSuccess(TextToSpeech tts) {
         this.talk = tts;
         flag = true;
-        startService(in);
+//        startService(in);
         this.talk.setOnUtteranceProgressListener(new UtteranceProgressListener() {
             @Override
             public void onStart(String s) {
+                System.out.println("IS THIS WORKINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
                 recognizer.stop();
-                System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!I AM SPEAKING________________________________________________________________________");
-                runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-//                        txt.setText("HELLO IS THIS EVEN WORKING SIMULTANEOUSLY");
-                    }
-                });
             }
 
             @Override
@@ -172,13 +155,29 @@ public class MainActivity extends Activity implements
                 System.out.println("Error");
             }
         });
-        speak("Hi, my name is Iris. I will be your smart waitress today.");
+        speak("Hi, my name is Iris. I will be your smart waitress today.", "main");
+    }
+
+    @Override
+    public void onFinishedSpeaking() {
+        recognizer.startListening(KWS_SEARCH);
+        System.out.println("on finished speaking");
+    }
+
+    @Override
+    public void onBeginSpeaking() {
+        recognizer.stop();
     }
 
     @Override
     public void onFailure(TextToSpeech tts) {
         flag = false;
         finish();
+    }
+
+    @Override
+    public void execReprompt() {
+
     }
 
     private static class SetupTask extends AsyncTask<Void, Void, Exception> {
@@ -206,7 +205,7 @@ public class MainActivity extends Activity implements
                 ((TextView) activityReference.get().findViewById(R.id.caption_text))
                         .setText("Failed to init recognizer " + result);
             } else {
-                activityReference.get().switchSearch(KWS_SEARCH);
+//                activityReference.get().switchSearch(KWS_SEARCH);
             }
         }
     }
@@ -232,7 +231,7 @@ public class MainActivity extends Activity implements
         super.onDestroy();
 
         if (recognizer != null) {
-            recognizer.cancel();
+            recognizer.stop();
             recognizer.shutdown();
 //            stopService()
         }
@@ -253,12 +252,11 @@ public class MainActivity extends Activity implements
         if (text.equals(KEYPHRASE)) {
 //            txt.setText("hey customer, how are you doing today?");
 //            speak("hey customer, how can I help you?");
-            stopService(in);
+//            stopService(in);
             recognizer.stop();
             Intent intent = new Intent(this, ListenActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity ( intent );
-            recognizer.cancel();
             recognizer.shutdown();
             finish();
         }
@@ -346,9 +344,11 @@ public class MainActivity extends Activity implements
         Fade animator = new Fade(speech, voorbeeldzinnen, 6000);
         animator.startAnimation();
     }
-    public void speak(String text){
-        speakingprogress.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,"messageID");
-        talk.speak(text, TextToSpeech.QUEUE_FLUSH, speakingprogress);
+    public void speak(String text, String uttID){
+        HashMap<String, String> map = new HashMap<String, String>();
+        map.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, uttID);
+//        talk.speak(text, TextToSpeech.QUEUE_FLUSH, map);
+        i.speak(text, map);
     }
 
 }

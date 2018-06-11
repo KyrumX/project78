@@ -2,13 +2,10 @@ package team.smartwaiter;
 
 import android.app.Activity;
 import android.os.AsyncTask;
-import android.os.Build;
+import android.os.Handler;
 import android.speech.tts.TextToSpeech;
 import android.os.Bundle;
 
-
-import java.sql.SQLOutput;
-import java.util.concurrent.TimeUnit;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,7 +17,6 @@ import android.content.ActivityNotFoundException;
 import android.speech.RecognitionListener;
 import android.speech.SpeechRecognizer;
 
-import android.speech.tts.UtteranceProgressListener;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -36,27 +32,33 @@ import team.smartwaiter.TTS.TextToSpeechInitializer;
 import team.smartwaiter.api.ApiController;
 import team.smartwaiter.api.OrderProcessor;
 import team.smartwaiter.api.Serializer;
-import team.smartwaiter.tools.Fade;
 import team.smartwaiter.tools.GeneralTools;
+import team.smartwaiter.tools.TypeWriter;
 
-import static android.speech.tts.TextToSpeech.QUEUE_ADD;
 import static team.smartwaiter.MainActivity.orderDataSingleton;
+import static team.smartwaiter.tools.GeneralTools.animateTxt;
 import static team.smartwaiter.tools.GeneralTools.setAlphaAnimation;
 
-public class ListenActivity extends Activity implements RecognitionListener, TextToSpeechIniListener{
+public class ListenActivity extends Activity implements RecognitionListener, TextToSpeechIniListener {
     private TextToSpeechInitializer i;
     private TextToSpeech talk;
-    private boolean flag = false;
+
     private TextView status;
-    private TextView txtlisten;
+    public static TypeWriter txtlisten;
     private ProgressBar progresslisten;
+    public static Handler handler = new Handler();
+
     private static boolean hasOrdered = false;
-    private static Intent intentmenu;
+    private boolean flag = false;
+    private boolean orderstatus = false;
+
     private Button reorder;
     private Button backtomenu;
-//    private volatile TextToSpeech tts;
     final SpeechRecognizer speech = SpeechRecognizer.createSpeechRecognizer(this);
     final Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+    private static Intent intentmenu;
+    private boolean hasEnteredInfo = false;
+
     private final int REQ_CODE_SPEECH_INPUT = 100;
 
     //VARS for processing orders
@@ -67,16 +69,10 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        setContentView(R.layout.tussen);
+        setContentView(R.layout.activity_listen);
 
-//        i = new TextToSpeechInitializer(this, Locale.US, this);
+        i = new TextToSpeechInitializer(this, Locale.US, this);
 
-
-//        if (flag) {
-//            talk.speak("Hello", QUEUE_ADD, null);
-//        }else{
-//                System.out.println("FAILED");
-//        }
         intentmenu = new Intent(this, MainActivity.class);
 
         backtomenu = findViewById(R.id.button3);
@@ -103,45 +99,33 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
             }
         });
 
-            //TODO
         final TextToSpeechIniListener ini = this;
+
+        txtlisten = (TypeWriter) findViewById(R.id.txtlisten);
 
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
-//                tts = new TextToSpeech(context, volatileOnInitListener);
                 i = new TextToSpeechInitializer(getApplicationContext(), Locale.US, ini);
             }
         });
 
-
-            //TODO
         speech.setRecognitionListener(this);
 
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
 
 
-
-
 //        Voor Nederlands, gebruik onderstaande code. Apparaat moet wel ingesteld zijn op Nederlands.
 //        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
 
-
-        //TODO
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
 
         status = findViewById(R.id.status);
-        txtlisten = findViewById(R.id.txtlisten);
         progresslisten = findViewById(R.id.progresslisten);
 
         TextView orderTextView = (TextView) findViewById(R.id.orderTextView);
         orderTextView.setText("#order: " + Integer.toString(orderDataSingleton.getOrderID()));
 
-        int loops = 0;
-        loops ++;
-        System.out.println("LOOP AMOUNTS: " + loops);
-
-        //TODO
         try {
             speech.startListening(intent);
         } catch (ActivityNotFoundException a) {
@@ -166,15 +150,10 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
 
     @Override
     public void onReadyForSpeech(Bundle bundle) {
-//        progresslisten.setVisibility(View.VISIBLE);
-//        status.setText("Listening..");
-//        talk.speak("Hello", QUEUE_ADD, null);
     }
 
     @Override
     public void onBeginningOfSpeech() {
-//        progresslisten.setVisibility(View.VISIBLE);
-//        status.setText("Listening..");
     }
 
     @Override
@@ -190,18 +169,18 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
     @Override
     public void onEndOfSpeech() {
         status.setText("Processing..");
-//        progresslisten.setVisibility(View.INVISIBLE);
     }
 
     @Override
     public void onError(int i) {
-        txtlisten.setText("I didn't quite catch that..");
+        animateTxt(txtlisten, "I didn't quite catch that..");
         reorder.setVisibility(View.VISIBLE);
         updateStatus("Waiting for command..", false);
     }
 
     @Override
     public void onResults(Bundle results) {
+
         ArrayList<String> matches = results
                 .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
 
@@ -212,25 +191,24 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         List<String> menu;
         menu = Serializer.ConvertMenu(controller.getMenu(), "name");
 
+        // if no order has been placed yet
         if (!hasOrdered) {
-            if (hasInfo(menu, matches)) {
-                System.out.println("has info !!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
-            } else {
-                System.out.println("doesn't have info");
-                if (!processMeal(menu, matches)) {
-                    // If order not complete, trying again here
-                    System.out.println("Couldn't find item");
-                    reprompt(7);
-                } else {
-                    // If the order complete, asking for confirmation here
-                    reprompt(5);
-                }
+            // if it doesn't have keywords for information e.g. 'allergies' or 'information'
+            if (!hasInfo(menu, matches)) {
+                getMeal(menu, matches);
+//                speak("I can't seem to figure out what you said, please try again.", "nomenuitem_hasinfo", true);
+                System.out.println("No infotype gotten so doing getMeal()");
+            }
+            if (talk.isSpeaking()) {
+
             }
         } else {
+            // if an order has been placed, this will confirm or cancel
             List<String> confirmationlist = Arrays.asList("yes", "yeah", "sure", "alright", "okay", "affirmative");
             List<String> denylist = Arrays.asList("no", "nope", "nah", "not", "cancel");
 
+            // checks relation between the strings above and the output gotten from user speech
             if (GeneralTools.checkForWords(matches, confirmationlist) != "null"){
                 reorder.setVisibility(View.VISIBLE);
                 speak("Order confirmed.", "confirmed");
@@ -240,73 +218,29 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
 
                 //OrderLines have been processed.
 
-                txtlisten.setText("Order confirmed.");
+                animateTxt(txtlisten, "Order confirmed.");
+
+                // this updates the status bar at the top of the application
                 updateStatus("Waiting for command..", false);
             } else if(GeneralTools.checkForWords(matches, denylist) != "null"){
-                speak("Okay, order canceled.", "canceled");
+                speak("Okay, order canceled","canceled");
                 reorder.setVisibility(View.VISIBLE);
-                txtlisten.setText("Order canceled.");
+                animateTxt(txtlisten, "Order canceled.");
                 hasOrdered = false;
                 updateStatus("Waiting for command..", false);
             } else {
-                speak("Sorry I didn't catch that, can you say that again?", "failedtohear");
-                txtlisten.setText("Didn't catch that, can you say that again?");
-                reprompt(5);
+                speak("Sorry I didn't catch that, can you say that again?", "failedtohear", true);
+                animateTxt(txtlisten, "Didn't catch that, can you say that again?");
+                reprompt();
             }
         }
-//
-//        status.setText("Waiting for 'Hey Iris'");
-//        setAlphaAnimation(status);
+
+        System.out.println("Got out of !hasordered if clause");
     }
 
-
-    public boolean processMeal(List<String> typelist,  ArrayList<String> output){
-        orderpairs.clear();
-
-        Logic logic = new Logic(typelist, output);
-        orderpairs = logic.generate();
-
-        System.out.println("typelist: " + typelist);
-        System.out.println("orderpairs: " + orderpairs);
-
-        if(orderpairs.size() < 1){
-            txtlisten.setText("I didn't quite catch that");
-            speak("I can't seem to figure out what you said, please try again.", "failed1");
-            return false;
-        } else {
-            Set<String> keys = orderpairs.keySet();
-
-            String order = "Order:\n";
-            String speakorder = "Your order consists of the following: ";
-
-            for (String key : keys) {
-//                System.out.println(orderpairs.get(key) + " " + key);
-                speakorder += orderpairs.get(key) + " " + key;
-                order += key + " | amount: " + orderpairs.get(key) + "\n";
-            }
-
-            final String order2 = order;
-
-            speakorder += ". Confirm by saying yes";
-            final String order1 = speakorder;
-
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    txtlisten.setText(order2);
-                }
-            });
-
-            speak(order1, "order");
-//            talk.speak(order1, QUEUE_ADD, null);
-
-            System.out.println("ORDERPAIRS: " + orderpairs);
-
-            updateStatus("Waiting for response..", true);
-            hasOrdered = true;
-            return true;
-        }
-    }
-
+    /**
+     This method checks if the user speech contains an info-type message like 'allergies' or 'info'
+     */
     public Boolean hasInfo(List<String> consumables, List<String> output) {
         List<String> generalinfolist = Arrays.asList("description", "information", "info", "about");
         List<String> price = Arrays.asList("price", "cost");
@@ -316,7 +250,6 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
 
         if (menuitem == "null"){
             // couldn't find a menuitem in the output
-            speak("I can't seem to figure out what you said, please try again.", "nomenuitem_hasinfo");
             return false;
         }
 
@@ -339,7 +272,7 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
             if (getInformation.showInformation(menuitem, "allergy").equals("none")) {
                 // TODO
                 speak(menuitem + " contains no potential allergy substances", "allergy_hasinfo");
-                txtlisten.setText("No allergies inside " + menuitem);
+                animateTxt(txtlisten, "No allergies inside " + menuitem);
                 updateStatus("Waiting for command..", false);
                 backtomenu.setVisibility(View.VISIBLE);
             } else {
@@ -351,26 +284,16 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         return false;
     }
 
-    public void reprompt(final Integer sleepduration){
-        boolean setText = false;
-        while (talk.isSpeaking()){
-            if(!setText){
-                setText = true;
-                System.out.println("CHANGED");
+    /**
+     This method prompts the user for speech input
+     */
+    public void reprompt(){
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                speech.startListening(intent);
             }
-//            System.out.println("SPEAKING");
-        }
-        speech.startListening(intent);
-//        AsyncTask.execute(new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-//                    TimeUnit.SECONDS.sleep(sleepduration);
-//                } catch (InterruptedException e) {
-//                    System.out.println("Error from reprompt");
-//                }
-//            }
-//        });
+        });
     }
 
     @Override
@@ -382,23 +305,23 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
     public void onEvent(int i, Bundle bundle) {
 
     }
-//
-//    @Override
-//    public void onInit(final int status) {
-//        new Thread(new Runnable() {
-//            public void run() {
-//                if(status != TextToSpeech.ERROR)
-//                    tts.setLanguage(Locale.US);
-//            }
-//        }).start();
-//    }
 
-    public void speak(String text, String uttID){
+    /**
+     This initiates TextToSpeech
+     */
+    public void speak(String text, String uttID, boolean... r){
         HashMap<String, String> map = new HashMap<String, String>();
         map.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, uttID);
-        talk.speak(text, TextToSpeech.QUEUE_FLUSH, map);
+        if (r.length != 0){
+            i.speak(text, map, r[0]);
+        } else {
+            i.speak(text, map);
+        }
     }
 
+    /**
+     This shows information about the product
+     */
     public void showinfo(String infotype, String menuitem, String... args){
         String prefix =  (args.length == 0) ? "" : args[0];
         String suffix = (args.length < 2) ? "" : args[1];
@@ -417,10 +340,14 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         } catch (InterruptedException e) {
             System.out.println(e);
         }
-        txtlisten.setText(GeneralTools.capitalize(menuitem) + "\n\n" + prefix_text + getInformation.showInformation(menuitem, infotype));
+        animateTxt(txtlisten, GeneralTools.capitalize(menuitem) + "\n\n" + prefix_text + getInformation.showInformation(menuitem, infotype));
+
         updateStatus("Waiting for command..", false);
     }
 
+    /**
+     This method updates the status bar found at the top of the application
+     */
     public void updateStatus(String text, boolean withProgress){
         status.setText(text);
         setAlphaAnimation(status);
@@ -431,36 +358,24 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         }
     }
 
+    /**
+     If TTS has been succesful
+     */
     @Override
-    public void onSucces(TextToSpeech tts) {
+    public void onSuccess(TextToSpeech tts) {
         this.talk = tts;
         flag = true;
-        startService(new Intent(this, TextToSpeechInitializer.class));
-        tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-            @Override
-            public void onStart(String s) {
-                System.out.println("ONSTART WORKINGGG__________________");
-                System.out.println(s);
-                runOnUiThread(new Runnable() {
+//        startService(new Intent(this, TextToSpeechInitializer.class));
+    }
 
-                    @Override
-                    public void run() {
-//                        txtlisten.setText("IS THIS WORKINGGGGGGGGGGGGGGGGGGGG");
-                    }
-                });
-            }
+    @Override
+    public void onFinishedSpeaking() {
+        System.out.println("Finished speaking.");
+    }
 
-            @Override
-            public void onDone(String s) {
-                System.out.println("ONDONE WORKINGGG__________________");
-                System.out.println(s);
-            }
+    @Override
+    public void onBeginSpeaking() {
 
-            @Override
-            public void onError(String s) {
-
-            }
-        });
     }
 
     @Override
@@ -468,4 +383,55 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         flag = false;
         finish();
     }
+
+    @Override
+    public void execReprompt() {
+        reprompt();
+    }
+
+    private void getMeal(List<String> typelist,  ArrayList<String> output){
+        orderpairs.clear();
+        Logic logic = new Logic(typelist, output);
+        orderpairs = logic.generate();
+
+        System.out.println("typelist: " + typelist);
+        System.out.println("orderpairs: " + orderpairs);
+
+        if(orderpairs.size() < 1){
+            System.out.println("Get meal couldn't find anything");
+            speak("I can't seem to figure out what you said, please try again.", "failed1", true);
+            animateTxt(txtlisten, "I didn't quite catch that.");
+//            orderstatus = true;
+            hasOrdered = false;
+        } else {
+            Set<String> keys = orderpairs.keySet();
+
+            String order = "Order:\n";
+            String speakorder = "Your order consists of the following: ";
+
+            for (String key : keys) {
+//                System.out.println(orderpairs.get(key) + " " + key);
+                speakorder += orderpairs.get(key) + " " + key;
+                order += key + " | amount: " + orderpairs.get(key) + "\n";
+            }
+
+            final String order2 = order;
+
+            speakorder += ". Confirm by saying yes";
+            final String order1 = speakorder;
+
+
+            speak(speakorder, "order", true);
+
+            animateTxt(txtlisten, order2);
+
+            System.out.println("ORDERPAIRS: " + orderpairs);
+
+            updateStatus("Waiting for response..", true);
+            hasOrdered = true;
+//            orderstatus = true;
+
+        }
+    }
+
 }

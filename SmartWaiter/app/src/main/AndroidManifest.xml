@@ -21,11 +21,11 @@
             </intent-filter>
         </activity>
         <activity android:name=".ListenActivity"></activity>
-        <service
-            android:name=".TTS.TextToSpeechInitializer"
-            android:enabled="true"
-            android:exported="false"
-            android:process="team.ttsservice">
-        </service>
+        <!--<service-->
+            <!--android:name=".TTS.TextToSpeechInitializer"-->
+            <!--android:enabled="true"-->
+            <!--android:exported="false"-->
+            <!--android:process="team.ttsservice">-->
+        <!--</service>-->
     </application>
 </manifest>
