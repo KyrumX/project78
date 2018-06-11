@@ -7,7 +7,7 @@
     tools:context=".ListenActivity">
 
     <TextView
-        android:id="@+id/txtlisten"
+        android:id="@+id/status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="32dp"
@@ -27,7 +27,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/txtlisten" />
+        app:layout_constraintTop_toBottomOf="@+id/status" />
 
     <Button
         android:id="@+id/button3"

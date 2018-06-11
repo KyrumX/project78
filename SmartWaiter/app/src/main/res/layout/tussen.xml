@@ -7,6 +7,17 @@
 
     tools:context=".MainActivity">
 
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Re-order"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/status" />
+
     <View
         android:id="@+id/rectangle_at_the_top"
         android:layout_width="match_parent"
@@ -31,27 +42,16 @@
         android:textSize="14sp" />
 
     <TextView
-        android:id="@+id/caption_text"
+        android:id="@+id/status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="21dp"
-        android:text="Preparing the application"
+        android:text="Listening.."
         android:textAppearance="@android:style/TextAppearance.Material.Small"
         android:textColor="@android:color/white"
         android:textSize="14sp" />
-
-    <ProgressBar
-        android:id="@+id/progressBar"
-        style="?android:attr/progressBarStyle"
-        android:layout_width="24dp"
-        android:layout_height="20dp"
-        android:layout_alignParentStart="true"
-        android:layout_alignTop="@+id/caption_text"
-        android:layout_marginStart="59dp"
-        android:layout_toLeftOf="@id/caption_text"
-        />
 
     <TextView
         android:id="@+id/result_text"
@@ -72,35 +72,51 @@
         android:src="@drawable/iris" />
 
     <TextView
-        android:id="@+id/textView"
-        android:layout_width="304dp"
+        android:id="@+id/txtlisten"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
         android:layout_marginTop="184dp"
         android:background="@drawable/textbackground"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
         android:text="Hey, I'm Iris. I will be your Smartwaiter today. Commence by saying &quot;Hey Iris&quot;."
         android:textColor="@android:color/white" />
 
-    <TextView
-        android:id="@+id/exampletitle"
+    <Button
+        android:id="@+id/button3"
+        style="@style/RobotoButtonStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="89dp"
-        android:text="Ask Iris.."
-        android:textStyle="bold" />
+        android:layout_alignBaseline="@+id/status"
+        android:layout_alignParentStart="true"
+        android:text="Back to menu"
+        android:textSize="12sp" />
 
-    <TextView
-        android:id="@+id/example"
+    <Button
+        android:id="@+id/button2"
+        style="@style/RobotoButtonStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="124dp"
-        android:text="What do you recommend me?"
-        android:textColor="@android:color/darker_gray"
-        android:textStyle="italic" />
+        android:layout_alignBaseline="@+id/status"
+        android:layout_alignParentStart="true"
+        android:text="Re-order"
+        android:textSize="12sp" />
+
+    <ProgressBar
+        android:id="@+id/progresslisten"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="24dp"
+        android:layout_height="20dp"
+        android:layout_alignEnd="@+id/button"
+        android:layout_alignTop="@+id/status"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="59dp"
+        android:layout_toLeftOf="@id/status"
+        />
+
 
 </RelativeLayout>
