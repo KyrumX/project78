@@ -201,7 +201,11 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
                 getMeal(menu, matches);
 //                speak("I can't seem to figure out what you said, please try again.", "nomenuitem_hasinfo", true);
                 System.out.println("No infotype gotten so doing getMeal()");
+
             }
+            if (getInvoicePrice(matches)) {
+                System.out.println("total price returned");}
+
             if (talk.isSpeaking()) {
 
             }
@@ -231,9 +235,11 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
                 hasOrdered = false;
                 updateStatus("Waiting for command..", false);
             } else {
-                speak("Sorry I didn't catch that, can you say that again?", "failedtohear", true);
-                animateTxt(txtlisten, "Didn't catch that, can you say that again?");
-                reprompt();
+
+                    speak("Sorry I didn't catch that, can you say that again?", "failedtohear", true);
+                    animateTxt(txtlisten, "Didn't catch that, can you say that again?");
+                    reprompt();
+
             }
         }
 
@@ -285,6 +291,25 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
 
         return false;
     }
+
+    public Boolean getInvoicePrice(List<String> output) {
+        List<String> generalpricelist = Arrays.asList("total price", "price", "bill", "invoice", "pay");
+
+        for (String line : output) {
+            for (String word : generalpricelist) {
+                if (line.toLowerCase().contains(word)) {
+                    String totalprice = "The total price is " + orderProcessor.getOrderSum() + "euros";
+                    speak(totalprice, "totalprice", true);
+                    return true;
+                }
+            }
+
+        }
+        return false;
+    }
+
+
+
 
     /**
      This method prompts the user for speech input
