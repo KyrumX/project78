@@ -30,6 +30,7 @@ import java.util.Locale;
 import team.smartwaiter.TTS.TextToSpeechIniListener;
 import team.smartwaiter.TTS.TextToSpeechInitializer;
 import team.smartwaiter.api.ApiController;
+import team.smartwaiter.api.MenuProcessor;
 import team.smartwaiter.api.OrderProcessor;
 import team.smartwaiter.api.Serializer;
 import team.smartwaiter.tools.GeneralTools;
@@ -65,6 +66,7 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
     HashMap orderpairs = new HashMap();
     ApiController controller = new ApiController();
     OrderProcessor orderProcessor = new OrderProcessor();
+    MenuProcessor menuProcessor = new MenuProcessor();
 
     @Override
     protected void onCreate(Bundle state) {
@@ -426,7 +428,10 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
             animateTxt(txtlisten, order2);
 
             System.out.println("ORDERPAIRS: " + orderpairs);
-            System.out.println("SUM: " + orderProcessor.getOrderSum());
+
+            //TODO: Ralph -->
+            System.out.println("SUM: " + orderProcessor.getOrderSum()); // <-- Returns a double of total sum
+            System.out.println("GOESWELLWITH: " + menuProcessor.goesWellWith(1)); // <-- Returns an arraylist containing all items that go well with <id>
 
             updateStatus("Waiting for response..", true);
             hasOrdered = true;

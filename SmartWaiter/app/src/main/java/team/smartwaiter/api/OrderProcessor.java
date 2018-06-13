@@ -13,10 +13,6 @@ public class OrderProcessor {
         this.controller = new ApiController();
     }
 
-    public void createNewOrder() {
-
-    }
-
     public void createNewOrderLine(HashMap<String, Integer> hashMap) {
         int orderID = OrderDataSingleton.getInstance().getOrderID();
 

@@ -162,5 +162,29 @@ public class ApiController {
         return null;
     }
 
+    public JSONArray getItemsThatGoWellWith(int itemID) {
+        String RequestedUrl = DEFAULT_URL + "/api/goeswellwith/";
+        String result;
+        JSONArray jsonArray;
+        HttpRequest request = new HttpGetRequest();
+
+        RequestedUrl = RequestedUrl += itemID;
+
+        try {
+            result = request.execute(RequestedUrl).get();
+            Object json = new JSONTokener(result).nextValue();
+            if(json instanceof JSONArray) {
+                jsonArray = new JSONArray(result);
+                return jsonArray;
+            }
+            else if (json instanceof JSONObject) {
+                return null;
+            }
+        } catch (Exception e ) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
 }
