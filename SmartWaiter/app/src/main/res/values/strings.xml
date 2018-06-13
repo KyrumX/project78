@@ -1,8 +1,12 @@
 <resources>
     <string name="app_name">SmartWaiter</string>
-    <string name="kws_caption">To start the application say \"hey Iris\".</string>
+    <string name="kws_caption">Say \"hey Iris\" to initiate</string>
     <string name="menu_caption">Say \"order\" if you want to make an order, \"info\" if you want more information about a menu item</string>
     <string name="order_caption">Please make your order</string>
-    <string name="forecast_caption">To try recognition of a weather forecast like \"sunny spells on Wednesday\".</string>
-    <string name="phone_caption">To try phonetic recognition say anything.</string>
+    <string name="cap1">\"I would like to order two bowls of spaghetti\"</string>
+    <string name="cap2">\"Tell me more about the dish Dame Blanch\"</string>
+    <string name="cap3">\"What time do you close today?\"</string>
+    <string name="cap4">\"How much does a burger cost?\"</string>
+    <string name="cap5">\"What allergy substances can be found in fried rice?\"</string>
 </resources>
+

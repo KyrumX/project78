@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,62 +7,100 @@
 
     tools:context=".MainActivity">
 
+    <View
+        android:id="@+id/rectangle_at_the_top"
+        android:layout_width="match_parent"
+        android:layout_height="67dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:background="#3c3336"
+        android:visibility="visible" />
+
     <TextView
-        android:id="@+id/result_text"
-        android:layout_width="wrap_content"
+        android:id="@+id/orderTextView"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginEnd="0dp"
+        android:gravity="center_vertical|right"
+        android:paddingRight="5dp"
+        android:text="#order:"
+        android:textAppearance="@android:style/TextAppearance.Material.Medium"
         android:textColor="@android:color/darker_gray"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/caption_text"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:textSize="14sp" />
 
     <TextView
         android:id="@+id/caption_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="481dp"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:typeface="sans"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="21dp"
+        android:text="Preparing the application"
+        android:textAppearance="@android:style/TextAppearance.Material.Small"
+        android:textColor="@android:color/white"
+        android:textSize="14sp" />
 
-    <RelativeLayout
-        android:layout_width="344dp"
-        android:layout_height="41dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        tools:layout_editor_absoluteY="2dp">
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="24dp"
+        android:layout_height="20dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignTop="@+id/caption_text"
+        android:layout_marginStart="59dp"
+        android:layout_toLeftOf="@id/caption_text"
+        />
 
-        <Button
-            android:id="@+id/button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="TestLogger"
-            android:text="Test api"
-            tools:layout_editor_absoluteX="0dp"
-            tools:layout_editor_absoluteY="0dp" />
+    <TextView
+        android:id="@+id/result_text"
+        android:layout_width="154dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="235dp"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@android:color/darker_gray" />
 
-        <TextView
-            android:id="@+id/orderTextView"
-            android:layout_width="85dp"
-            android:layout_height="match_parent"
-            android:layout_alignParentEnd="true"
-            android:layout_marginEnd="92dp"
-            android:text="Order:"
-            android:textSize="24sp" />
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="306dp"
+        android:layout_height="290dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/iris" />
 
-        <TextView
-            android:id="@+id/idTextView"
-            android:layout_width="82dp"
-            android:layout_height="match_parent"
-            android:layout_marginStart="-92dp"
-            android:layout_toEndOf="@+id/orderTextView"
-            android:textSize="24sp" />
-    </RelativeLayout>
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="304dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="184dp"
+        android:background="@drawable/textbackground"
+        android:text="Hey, I'm Iris. I will be your Smartwaiter today. Commence by saying &quot;Hey Iris&quot;."
+        android:textColor="@android:color/white" />
 
-</android.support.constraint.ConstraintLayout>
+    <TextView
+        android:id="@+id/exampletitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="89dp"
+        android:text="Ask Iris.."
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/example"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="124dp"
+        android:text="What do you recommend me?"
+        android:textColor="@android:color/darker_gray"
+        android:textStyle="italic" />
+
+</RelativeLayout>

@@ -1,6 +1,10 @@
 package team.smartwaiter.tools;
 
-import java.sql.SQLOutput;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.view.View;
 import java.util.List;
 
 public class GeneralTools {
@@ -68,5 +72,31 @@ public class GeneralTools {
 
         System.out.println("returning null in checkforwords");
         return "null";
+    }
+
+    public static void setAlphaAnimation(View v) {
+        ObjectAnimator fadeOut = ObjectAnimator.ofFloat(v, "alpha",  1f, .3f);
+        fadeOut.setDuration(2000);
+        ObjectAnimator fadeIn = ObjectAnimator.ofFloat(v, "alpha", .3f, 1f);
+        fadeIn.setDuration(2000);
+
+        final AnimatorSet mAnimationSet = new AnimatorSet();
+
+        mAnimationSet.play(fadeIn).after(fadeOut);
+
+        mAnimationSet.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                mAnimationSet.start();
+            }
+        });
+        mAnimationSet.start();
+    }
+
+    public static void animateTxt(TypeWriter tw, String txt){
+        tw.setText("");
+        tw.setCharacterDelay(40);
+        tw.animateText(txt);
     }
 }

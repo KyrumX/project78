@@ -4,40 +4,55 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Typeface;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.view.View;
+import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
+import java.util.Locale;
 
 import edu.cmu.pocketsphinx.Assets;
 import edu.cmu.pocketsphinx.Hypothesis;
 import edu.cmu.pocketsphinx.RecognitionListener;
 import edu.cmu.pocketsphinx.SpeechRecognizer;
 import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
+import team.smartwaiter.TTS.TextToSpeechIniListener;
+import team.smartwaiter.TTS.TextToSpeechInitializer;
 import team.smartwaiter.api.ApiController;
 import team.smartwaiter.storage.OrderDataSingleton;
+import team.smartwaiter.tools.Fade;
+
+import static team.smartwaiter.tools.GeneralTools.setAlphaAnimation;
 
 
 public class MainActivity extends Activity implements
-        RecognitionListener{
+        RecognitionListener, TextToSpeechIniListener{
 
     public MainActivity() {
         orderDataSingleton.update();
     }
 
     private final ApiController API = new ApiController();
+    public static TextView orderTextView;
+    private TextView idTextView, txt;
+    public static OrderDataSingleton orderDataSingleton = OrderDataSingleton.getInstance();
 
-    private TextView orderTextView, idTextView, txt;
-    OrderDataSingleton orderDataSingleton = OrderDataSingleton.getInstance();
-
+    private TextToSpeech talk;
+    private TextToSpeechInitializer i;
+    private boolean flag = false;
 
     /* Named searches allow to quickly reconfigure the decoder */
     private static final String KWS_SEARCH = "wakeup";
@@ -47,6 +62,15 @@ public class MainActivity extends Activity implements
     /* Keyword we are looking for to activate menu */
     private static final String KEYPHRASE = "hey iris";
 
+    private static final String OTHER = "back";
+
+
+    private static ProgressBar progress;
+    private static TextView introText;
+    private static Button testbutton;
+    private Intent in = new Intent(this, TextToSpeechInitializer.class);
+    private String[] voorbeeldzinnen = new String[5];
+    private HashMap<String, String> speakingprogress = new HashMap<String, String>();
 
     /* Used to handle permission request */
     private static final int PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
@@ -59,17 +83,43 @@ public class MainActivity extends Activity implements
         super.onCreate(state);
         setContentView(R.layout.activity_main);
 
-        idTextView = (TextView) findViewById(R.id.idTextView);
-        idTextView.setText(Integer.toString(orderDataSingleton.getOrderID()));
+        final TextToSpeechIniListener ini = this;
+
+        i = new TextToSpeechInitializer(this, Locale.US, this);
+
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                i = new TextToSpeechInitializer(getApplicationContext(), Locale.US, ini);
+            }
+        });
+
+        voorbeeldzinnen = new String[]{getString(R.string.cap1), getString(R.string.cap2), getString(R.string.cap3), getString(R.string.cap4), getString(R.string.cap5)};
+
+        orderTextView = (TextView) findViewById(R.id.orderTextView);
+        orderTextView.setText("#order: " + Integer.toString(orderDataSingleton.getOrderID()));
+
         txt = (TextView) findViewById(R.id.result_text);
+//        txt.setText("Starting text");
+
+//        Typeface roboto = Typeface.createFromAsset(getAssets(), "fonts/roboto.ttf");
+//        txt.setTypeface(roboto);
+
+        startExamples();
+
+        progress = findViewById(R.id.progressBar);
 
 //        // Prepare the data for UI
         captions = new HashMap<>();
         captions.put(KWS_SEARCH, R.string.kws_caption);
 
+        Typeface roboto = Typeface.createFromAsset(getAssets(), "fonts/roboto.ttf");
 
-        ((TextView) findViewById(R.id.caption_text))
-                .setText("Preparing the application");
+        introText = findViewById(R.id.caption_text);
+        introText.setTypeface(roboto);
+
+//        ((TextView) findViewById(R.id.caption_text))
+//                .setText("Preparing the application");
 
         // Check if user has given permission to record audio
         int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.RECORD_AUDIO);
@@ -82,6 +132,53 @@ public class MainActivity extends Activity implements
         new SetupTask(this).execute();
     }
 
+    @Override
+    public void onSuccess(TextToSpeech tts) {
+        this.talk = tts;
+        flag = true;
+//        startService(in);
+        this.talk.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+            @Override
+            public void onStart(String s) {
+                System.out.println("IS THIS WORKINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
+                recognizer.stop();
+            }
+
+            @Override
+            public void onDone(String s) {
+                System.out.println("DoneDOINGIT_____________________________________________");
+                recognizer.startListening(KWS_SEARCH);
+            }
+
+            @Override
+            public void onError(String s) {
+                System.out.println("Error");
+            }
+        });
+        speak("Hi, my name is Iris. I will be your smart waitress today.", "main");
+    }
+
+    @Override
+    public void onFinishedSpeaking() {
+        recognizer.startListening(KWS_SEARCH);
+        System.out.println("on finished speaking");
+    }
+
+    @Override
+    public void onBeginSpeaking() {
+        recognizer.stop();
+    }
+
+    @Override
+    public void onFailure(TextToSpeech tts) {
+        flag = false;
+        finish();
+    }
+
+    @Override
+    public void execReprompt() {
+
+    }
 
     private static class SetupTask extends AsyncTask<Void, Void, Exception> {
         WeakReference<MainActivity> activityReference;
@@ -101,11 +198,14 @@ public class MainActivity extends Activity implements
         }
         @Override
         protected void onPostExecute(Exception result) {
+            progress.setVisibility(View.GONE);
+            introText.setText("Waiting for 'hey Iris'");
+            setAlphaAnimation(introText);
             if (result != null) {
                 ((TextView) activityReference.get().findViewById(R.id.caption_text))
                         .setText("Failed to init recognizer " + result);
             } else {
-                activityReference.get().switchSearch(KWS_SEARCH);
+//                activityReference.get().switchSearch(KWS_SEARCH);
             }
         }
     }
@@ -131,8 +231,9 @@ public class MainActivity extends Activity implements
         super.onDestroy();
 
         if (recognizer != null) {
-            recognizer.cancel();
+            recognizer.stop();
             recognizer.shutdown();
+//            stopService()
         }
     }
 
@@ -147,16 +248,18 @@ public class MainActivity extends Activity implements
             return;
 
         String text = hypothesis.getHypstr();
+        System.out.println("THIS IS TEXT: " + text);
         if (text.equals(KEYPHRASE)) {
+//            txt.setText("hey customer, how are you doing today?");
+//            speak("hey customer, how can I help you?");
+//            stopService(in);
             recognizer.stop();
             Intent intent = new Intent(this, ListenActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity ( intent );
-            recognizer.cancel();
             recognizer.shutdown();
             finish();
         }
-
     }
 
     /**
@@ -164,7 +267,6 @@ public class MainActivity extends Activity implements
      */
     @Override
     public void onResult(Hypothesis hypothesis) {
-        ((TextView) findViewById(R.id.result_text)).setText("");
         if (hypothesis != null) {
 
         }
@@ -172,6 +274,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onBeginningOfSpeech() {
+
     }
 
     /**
@@ -179,8 +282,8 @@ public class MainActivity extends Activity implements
      */
     @Override
     public void onEndOfSpeech() {
-        if (!recognizer.getSearchName().equals(KWS_SEARCH))
-            switchSearch(KWS_SEARCH);
+//        if (!recognizer.getSearchName().equals(KWS_SEARCH))
+//            switchSearch(KWS_SEARCH);
     }
 
     private void switchSearch(String searchName) {
@@ -191,9 +294,6 @@ public class MainActivity extends Activity implements
             recognizer.startListening(searchName);
         else
             recognizer.startListening(searchName, 1000);
-
-        String caption = getResources().getString(captions.get(searchName));
-        ((TextView) findViewById(R.id.caption_text)).setText(caption);
 
     }
 
@@ -227,9 +327,28 @@ public class MainActivity extends Activity implements
         switchSearch(KWS_SEARCH);
     }
 
-
     //Aarons API tester button :)
     public void TestLogger(View v) {
         API.Print();
     }
+
+    public void startExamples(){
+
+        System.out.println(voorbeeldzinnen[0]);
+        Typeface roboto = Typeface.createFromAsset(getAssets(), "fonts/roboto.ttf");
+
+        TextView speech = (TextView) findViewById(R.id.example);
+        speech.setTypeface(roboto, Typeface.ITALIC);
+        System.out.println(speech.getTypeface());
+
+        Fade animator = new Fade(speech, voorbeeldzinnen, 6000);
+        animator.startAnimation();
+    }
+    public void speak(String text, String uttID){
+        HashMap<String, String> map = new HashMap<String, String>();
+        map.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, uttID);
+//        talk.speak(text, TextToSpeech.QUEUE_FLUSH, map);
+        i.speak(text, map);
+    }
+
 }
