@@ -28,7 +28,7 @@ public class OrderDataSingleton {
     }
 
     public void receiveOrderID() {
-        orderID = Serializer.OrderID(controller.postOrder());
+        orderID = Serializer.orderID(controller.postOrder());
 
         constructedOrder = true;
     }

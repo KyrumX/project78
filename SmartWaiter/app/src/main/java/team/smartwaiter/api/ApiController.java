@@ -4,8 +4,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
-import java.security.Key;
-import java.security.KeyStore;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -18,7 +16,7 @@ public class ApiController {
     public void Print() {
 
         //Ralph, please take a look at my trial code here:
-        HashMap<Integer, String> hm = Serializer.MenuItems(getMenu()); // <-- Link the menu item names with ids
+        HashMap<Integer, String> hm = Serializer.menuItems(getMenu()); // <-- Link the menu item names with ids
         System.out.println(hm);
         int keyV = 0;
         for (int key : hm.keySet()) {
@@ -31,7 +29,7 @@ public class ApiController {
         //Here you should check wether keyV is 0, if it is the product has not been found, it should not happen because Selims code checks wether an item exists before going on
 
         JSONObject o = getMenuItemDetails(keyV); // <-- Pull the JSON data from the database
-        HashMap hm2 = Serializer.MenuItemInformation(o);// <-- Transfrom the JSON to usefull data, a hashmap in this case
+        HashMap hm2 = Serializer.menuItemInformation(o);// <-- Transfrom the JSON to usefull data, a hashmap in this case
 
     }
 
@@ -114,8 +112,6 @@ public class ApiController {
     }
 
     public JSONObject postOrderLine(int amount, int id, int currentOrderID) {
-        //TODO: [AARON] Change order functionality
-
         String RequestedUrl = DEFAULT_URL + "/api/orderlines/";
         String result;
         String params;
@@ -131,6 +127,30 @@ public class ApiController {
             if(json instanceof JSONObject) {
                 jsonObject = new JSONObject(result);
                 System.out.println(jsonObject);
+                return jsonObject;
+            }
+            else if (json instanceof JSONArray) {
+                return null;
+            }
+        } catch (Exception e ) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public JSONObject getOrderTotal(int currentOrderID) {
+        String RequestedUrl = DEFAULT_URL + "/api/orders/sum/";
+        String result;
+        JSONObject jsonObject;
+        HttpRequest request = new HttpGetRequest();
+
+        RequestedUrl = RequestedUrl += currentOrderID;
+
+        try {
+            result = request.execute(RequestedUrl).get();
+            Object json = new JSONTokener(result).nextValue();
+            if(json instanceof JSONObject) {
+                jsonObject = new JSONObject(result);
                 return jsonObject;
             }
             else if (json instanceof JSONArray) {

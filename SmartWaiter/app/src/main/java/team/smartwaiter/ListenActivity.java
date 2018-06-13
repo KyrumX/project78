@@ -189,7 +189,7 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
 
         //List<String> food = Arrays.asList("burger", "rice", "spaghetti", "mixed grill", "soup", "steak", "salad", "macaroni");
         List<String> menu;
-        menu = Serializer.ConvertMenu(controller.getMenu(), "name");
+        menu = Serializer.convertMenu(controller.getMenu(), "name");
 
         // if no order has been placed yet
         if (!hasOrdered) {
@@ -426,6 +426,7 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
             animateTxt(txtlisten, order2);
 
             System.out.println("ORDERPAIRS: " + orderpairs);
+            System.out.println("SUM: " + orderProcessor.getOrderSum());
 
             updateStatus("Waiting for response..", true);
             hasOrdered = true;

@@ -1,7 +1,8 @@
 package team.smartwaiter.api;
 
+import org.json.JSONObject;
+
 import java.util.HashMap;
-import java.util.Hashtable;
 
 import team.smartwaiter.storage.OrderDataSingleton;
 
@@ -29,7 +30,7 @@ public class OrderProcessor {
     }
 
     private int linkNameWithID(String name) {
-        HashMap<Integer, String> hm = Serializer.MenuItems(controller.getMenu());
+        HashMap<Integer, String> hm = Serializer.menuItems(controller.getMenu());
         int keyFound = 0;
         for (int key : hm.keySet()) {
             if (hm.get(key).equals(name)) {
@@ -38,5 +39,13 @@ public class OrderProcessor {
 
         }
         return keyFound;
+    }
+
+    public double getOrderSum() {
+        int orderID = OrderDataSingleton.getInstance().getOrderID();
+
+        JSONObject jsonObject = controller.getOrderTotal(orderID);
+
+        return Serializer.orderSum(jsonObject);
     }
 }
