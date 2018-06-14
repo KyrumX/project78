@@ -91,4 +91,29 @@ public class Serializer {
 
         return sum;
     }
+
+    public static HashMap<String, Integer> orderLines(JSONObject jsonObject) {
+        HashMap<String, Integer> result = new HashMap();
+        ApiController controller = new ApiController();
+        HashMap menu = Serializer.menuItems(controller.getMenu());
+
+        if (jsonObject == null) {
+            return result;
+        }
+        try {
+            JSONArray array = jsonObject.getJSONArray("lines");
+            for(int i = 0; i < array.length(); i++) {
+                try {
+                    JSONObject object = array.getJSONObject(i);
+                    String id = (String) menu.get(object.getInt("menuitem_id"));
+                    result.put(id, object.getInt("amount"));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
 }

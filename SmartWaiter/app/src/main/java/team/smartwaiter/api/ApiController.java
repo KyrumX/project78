@@ -186,5 +186,28 @@ public class ApiController {
         return null;
     }
 
+    public JSONObject getOrderLinesAPI(int orderID) {
+        String RequestedUrl = DEFAULT_URL + "/api/orders/";
+        String result;
+        JSONArray jsonArray;
+        HttpRequest request = new HttpGetRequest();
+
+        RequestedUrl = RequestedUrl += orderID;
+
+        try {
+            result = request.execute(RequestedUrl).get();
+            Object json = new JSONTokener(result).nextValue();
+            if(json instanceof JSONArray) {
+                return null;
+            }
+            else if (json instanceof JSONObject) {
+                return new JSONObject(result);
+            }
+        } catch (Exception e ) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
 }
