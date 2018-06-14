@@ -84,7 +84,7 @@ public class MainActivity extends Activity implements
 
         final TextToSpeechIniListener ini = this;
 
-        i = new TextToSpeechInitializer(this, Locale.US, this);
+//        i = new TextToSpeechInitializer(this, Locale.US, this);
 
         AsyncTask.execute(new Runnable() {
             @Override

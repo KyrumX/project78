@@ -45,10 +45,10 @@ public class OrderProcessor {
         return Serializer.orderSum(jsonObject);
     }
 
-    public HashMap<String, Integer> getOrderLines() {
+    public HashMap<String, Integer> getOrderLines(int id) {
         int orderID = OrderDataSingleton.getInstance().getOrderID();
 
-        JSONObject jsonObject = controller.getOrderLinesAPI(1);
+        JSONObject jsonObject = controller.getOrderLinesAPI(id);
 
         return Serializer.orderLines(jsonObject);
     }
