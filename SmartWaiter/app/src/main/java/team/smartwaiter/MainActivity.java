@@ -63,10 +63,11 @@ public class MainActivity extends Activity implements
 
     private static final String OTHER = "back";
 
-
     private static ProgressBar progress;
     private static TextView introText;
     private static Button testbutton;
+    //private static Button infobutton;
+
     private Intent in = new Intent(this, TextToSpeechInitializer.class);
     private String[] voorbeeldzinnen = new String[5];
     private HashMap<String, String> speakingprogress = new HashMap<String, String>();
@@ -97,6 +98,9 @@ public class MainActivity extends Activity implements
 
         orderTextView = (TextView) findViewById(R.id.orderTextView);
         orderTextView.setText("#order: " + Integer.toString(orderDataSingleton.getOrderID()));
+
+        // Create InfoButton. When pressed / when hearing "help", it shows example commands.
+        //infobutton = new Button(this);
 
         txt = (TextView) findViewById(R.id.result_text);
 //        txt.setText("Starting text");
@@ -157,7 +161,8 @@ public class MainActivity extends Activity implements
         if (orderDataSingleton.isFirstLaunch())
             speak("Hi, my name is Iris. I will be your smart waitress today.", "main");
         else {
-            speak("Please activate me when you have any questions or want to place an order.", "");
+            speak("Please activate me when you have any questions or want to place an order. " +
+                    "If you need any assistance, press the information icon or say: help.", "");
         }
     }
 
