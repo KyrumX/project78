@@ -66,7 +66,7 @@ public class MainActivity extends Activity implements
     private static ProgressBar progress;
     private static TextView introText;
     private static Button testbutton;
-    //private static Button infobutton;
+    private Button infoButton;
 
     private Intent in = new Intent(this, TextToSpeechInitializer.class);
     private String[] voorbeeldzinnen = new String[5];
@@ -100,7 +100,35 @@ public class MainActivity extends Activity implements
         orderTextView.setText("#order: " + Integer.toString(orderDataSingleton.getOrderID()));
 
         // Create InfoButton. When pressed / when hearing "help", it shows example commands.
-        //infobutton = new Button(this);
+        infoButton = findViewById(R.id.button6);
+        infoButton.setVisibility(View.VISIBLE);
+
+        infoButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                speak("Welcome. Before you give me a command, please say, hey IRIS. " +
+                        "To order, say, I would like to order, amount, dish. " +
+                        "I will ask you for confirmation before processing the order. " +
+                        "For advice, say, I would like advice about, dish. " +
+                        "For the bill, say, I would like to pay." +
+                        "Enjoy your meal!", "info");
+                finish();
+            }
+        });
+        /*
+        reorder = findViewById(R.id.button2);
+        reorder.setVisibility(View.GONE);
+
+        reorder.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                hasOrdered = false;
+                Intent intent = getIntent();
+                finish();
+                startActivity(intent);
+            }
+        });
+        */
 
         txt = (TextView) findViewById(R.id.result_text);
 //        txt.setText("Starting text");
@@ -358,5 +386,4 @@ public class MainActivity extends Activity implements
 //        talk.speak(text, TextToSpeech.QUEUE_FLUSH, map);
         i.speak(text, map);
     }
-
 }

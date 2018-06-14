@@ -103,4 +103,12 @@
         android:textColor="@android:color/darker_gray"
         android:textStyle="italic" />
 
+    <Button
+        android:id="@+id/button6"
+        android:layout_width="38dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:text="i" />
+
 </RelativeLayout>
