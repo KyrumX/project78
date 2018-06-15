@@ -25,7 +25,7 @@ public class OrderProcessor {
         }
     }
 
-    private int linkNameWithID(String name) {
+    public int linkNameWithID(String name) {
         HashMap<Integer, String> hm = Serializer.menuItems(controller.getMenu());
         int keyFound = 0;
         for (int key : hm.keySet()) {

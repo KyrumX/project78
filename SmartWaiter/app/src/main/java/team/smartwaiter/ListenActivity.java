@@ -212,8 +212,10 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
             setContentView(R.layout.show_summary);
             System.out.println("SHOWING SUMMARY----------------------");
             getOrderSummary();
+
             // if no order has been placed yet
         } else if (!hasOrdered) {
+
 
             // if it doesn't have keywords for information e.g. 'allergies' or 'information'
             if (!hasInfo(menu, matches)) {
@@ -224,7 +226,12 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
             }
             if (getInvoicePrice(matches)) {
                 System.out.println("total price returned");}
-        } else {
+            if(getGoesWellWith(matches, menu)){
+                System.out.println("List returned");
+            }
+
+        }
+        else {
             // if an order has been placed, this will confirm or cancel
             List<String> confirmationlist = Arrays.asList("yes", "yeah", "sure", "alright", "okay", "affirmative");
             List<String> denylist = Arrays.asList("no", "nope", "nah", "not", "cancel");
@@ -313,16 +320,45 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
     public Boolean getInvoicePrice(List<String> output) {
         List<String> generalpricelist = Arrays.asList("bill", "invoice", "pay", "check");
 
-        for (String line : output) {
-            for (String word : generalpricelist) {
-                if (line.toLowerCase().contains(word)) {
+        if (GeneralTools.checkForWords(output, generalpricelist) != "null") {
                     double sum = orderProcessor.getOrderSum();
                     String totalprice = "The total price is " + sum + " euros. Please go to the cash register, a waiter will be waiting for you there.";
                     speak(totalprice, "totalprice", true);
                     animateTxt(txtlisten, "Total: " + sum + " - A waiter will await you at the cash register.");
                     return true;
                 }
+
+
+
+        return false;
+    }
+
+    public Boolean getGoesWellWith(List<String> output, List<String> menu){
+        List<String> goeswellwithlist = Arrays.asList("combine", "advice");
+        String outputitem = GeneralTools.checkForWords(output, menu);
+        String menuitem = outputitem.toLowerCase();
+        String speakitems = "";
+        if (GeneralTools.checkForWords(output, goeswellwithlist)  != "null") {
+            if(menuitem.toLowerCase() != "null"){
+                int id = orderProcessor.linkNameWithID(menuitem);
+                ArrayList<String> listofitems = menuProcessor.goesWellWith(id);
+                for(String item : listofitems) {
+                    if(item.equals("None")) {
+                        speak("I can not give you advice on" + menuitem, "emptyadvicelist" , true);
+                        animateTxt(txtlisten, "I can not give you advice on " + menuitem);
+                    }else{
+                        speakitems += item;
+                        speakitems += ", ";
+                        speak("We advice the following items with " + menuitem + ": " + speakitems, "advice", true);
+                        animateTxt(txtlisten, "We advice the following items with " + menuitem + ": " + speakitems);
+                    }
+                }
+                return true;
+            }else{
+                speak("Im sorry but i can't give you advice on that", "noadvice", true);
+                animateTxt(txtlisten, "Im sorry but i can't give you advice on that");
             }
+
 
         }
         return false;
