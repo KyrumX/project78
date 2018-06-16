@@ -72,7 +72,7 @@
         android:src="@drawable/iris" />
 
     <team.smartwaiter.tools.TypeWriter
-        android:id="@+id/txtlisten"
+        android:id="@+id/txtlistensumm"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
@@ -98,5 +98,29 @@
         android:layout_toLeftOf="@id/status"
         />
 
+    <TableLayout
+        android:id="@+id/table"
+        android:layout_width="325dp"
+        android:layout_height="133dp"
+        android:layout_alignBottom="@+id/result_text"
+        android:layout_centerHorizontal="true"
+        android:scrollbars="vertical">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </TableLayout>
 
 </RelativeLayout>

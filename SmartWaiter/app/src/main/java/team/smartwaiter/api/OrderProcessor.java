@@ -1,5 +1,7 @@
 package team.smartwaiter.api;
 
+import org.json.JSONObject;
+
 import java.util.HashMap;
 import java.util.Hashtable;
 
@@ -38,5 +40,21 @@ public class OrderProcessor {
 
         }
         return keyFound;
+    }
+
+    public double getOrderSum() {
+        int orderID = OrderDataSingleton.getInstance().getOrderID();
+
+        JSONObject jsonObject = controller.getOrderTotal(orderID);
+
+        return Serializer.orderSum(jsonObject);
+    }
+
+    public HashMap<String, Integer> getOrderLines(int id) {
+        int orderID = OrderDataSingleton.getInstance().getOrderID();
+
+        JSONObject jsonObject = controller.getOrderLinesAPI(id);
+
+        return Serializer.orderLines(jsonObject);
     }
 }

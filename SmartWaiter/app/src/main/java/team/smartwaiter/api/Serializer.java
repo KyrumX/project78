@@ -71,4 +71,65 @@ public class Serializer {
 
         return orderID;
     }
+
+    public static double orderSum(JSONObject jsonObject) {
+        double sum = -1;
+
+        if(jsonObject == null)
+            return -1;
+        try {
+            if (jsonObject.get("sum") instanceof Integer) {
+                Integer value = (Integer) jsonObject.get("sum");
+                sum = value.doubleValue();
+            }
+            else {
+                sum = (double) jsonObject.get("sum");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return sum;
+    }
+
+    public static HashMap<Integer, String> menuItems(JSONArray jsonArray) {
+        HashMap<Integer, String> hm = new HashMap<Integer, String>();
+
+        if(jsonArray == null)
+            return hm;
+
+        for(int i = 0; i < jsonArray.length(); i++) {
+            try {
+                hm.put(((int) jsonArray.getJSONObject(i).get("id")), jsonArray.getJSONObject(i).get("name").toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return hm;
+    }
+
+    public static HashMap<String, Integer> orderLines(JSONObject jsonObject) {
+        HashMap<String, Integer> result = new HashMap();
+        ApiController controller = new ApiController();
+        HashMap menu = Serializer.menuItems(controller.getMenu());
+
+        if (jsonObject == null) {
+            return result;
+        }
+        try {
+            JSONArray array = jsonObject.getJSONArray("lines");
+            for(int i = 0; i < array.length(); i++) {
+                try {
+                    JSONObject object = array.getJSONObject(i);
+                    String id = (String) menu.get(object.getInt("menuitem_id"));
+                    result.put(id, object.getInt("amount"));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
 }

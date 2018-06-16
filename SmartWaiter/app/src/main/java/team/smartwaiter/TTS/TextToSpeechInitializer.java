@@ -18,6 +18,7 @@ public class TextToSpeechInitializer extends Service{
     private TextToSpeechIniListener callback;
     private final Locale locale = Locale.US;
     private static boolean repr = false;
+    private static boolean isAskingForReprompt = false;
 //    private Runnable r;
 
     public TextToSpeechInitializer(Context context , Locale locale , TextToSpeechIniListener l) {
@@ -51,8 +52,12 @@ public class TextToSpeechInitializer extends Service{
                             if (repr) {
                                 repr = false;
                                 System.out.println("Change current REPR to " + repr);
-                                callback.execReprompt();
-                                System.out.println("REPROMPTING");
+
+                                if(isAskingForReprompt) {
+                                    System.out.println("FULFILLING REPROMPT");
+                                    callback.execReprompt();
+                                }
+//                                System.out.println("REPROMPTING");
                             }
 
                             callback.onFinishedSpeaking();
@@ -77,12 +82,20 @@ public class TextToSpeechInitializer extends Service{
     public void speak(String text, HashMap<String, String> uttID, boolean... r){
         System.out.println("To speak: " + text);
         System.out.println("CURRENT REPR: " + repr);
-        if (r.length != 0){
+        if (r.length != 0) {
             System.out.println("GIVEN REPR: " + r[0]);
             repr = r[0];
             System.out.println("CHANGED CURRENT REPR TO " + repr);
+            System.out.println("THIS IS THE LENGTH OF R: " + r.length);
+            if (r.length == 2){
+                System.out.println("IS EQUAL TO TWO");
+                isAskingForReprompt = r[1];
+            }
 //            hasHandler = true;
         }
+//        } else if(r.length > 1) {
+//            isAskingForReprompt = r[1];
+//        }
 
         talk.speak(text, TextToSpeech.QUEUE_FLUSH, uttID);
     }

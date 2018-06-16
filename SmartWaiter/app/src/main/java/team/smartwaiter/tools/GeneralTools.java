@@ -4,8 +4,23 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.content.Context;
+import android.view.Gravity;
 import android.view.View;
+import android.widget.TableLayout;
+import android.widget.TableRow;
+import android.widget.TextView;
+
+import java.text.DecimalFormat;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+
+import team.smartwaiter.R;
+import team.smartwaiter.api.OrderProcessor;
+import team.smartwaiter.getInformation;
+
+import static team.smartwaiter.MainActivity.orderDataSingleton;
 
 public class GeneralTools {
     public static String capitalize(final String line) {
@@ -99,4 +114,5 @@ public class GeneralTools {
         tw.setCharacterDelay(40);
         tw.animateText(txt);
     }
+
 }

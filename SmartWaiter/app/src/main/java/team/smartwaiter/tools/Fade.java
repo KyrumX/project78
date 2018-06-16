@@ -110,4 +110,8 @@ public class Fade {
     {
         blobText.startAnimation(fadeOutAnimationObject);
     }
+
+    public void end(){
+        blobText.clearAnimation();
+    }
 }
