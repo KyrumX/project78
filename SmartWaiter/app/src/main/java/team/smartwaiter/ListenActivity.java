@@ -205,6 +205,10 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
             if (getInvoicePrice(matches)) {
                 System.out.println("total price returned");}
 
+            if (closingTime(matches)){
+                System.out.println("closingtime returned");
+            }
+
             if (talk.isSpeaking()) {
 
             }
@@ -319,7 +323,39 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
         return false;
     }
 
+    public Boolean closingTime(List<String> output) {
+        List<String> generalcloselist = Arrays.asList("close", "closed", "shutdown" );
+        List<String> generaltimelist = Arrays.asList("open", "opened", "available", "days");
+        List<String> generalholidaylist = Arrays.asList("holiday", "vacation", "holidays", "christmas", "easter");
 
+        for (String line : output) {
+            for (String word : generalholidaylist) {
+                if (line.toLowerCase().contains(word)) {
+                    String feestdagen = "We are closed on all national holidays";
+                    speak(feestdagen, "feestdagen", true);
+                    animateTxt(txtlisten, "We are closed on all national holidays");
+                    return true;
+                }
+            }
+            for (String word : generalcloselist) {
+                if (line.toLowerCase().contains(word)) {
+                    String sluitingstijd = "We close at eleven pm.";
+                    speak(sluitingstijd, "sluitingstijd", true);
+                    animateTxt(txtlisten, "We close at 23:00");
+                    return true;
+                }
+            }
+            for (String word : generaltimelist) {
+                if (line.toLowerCase().contains(word)) {
+                    String openingstijd = "We are open every day of the week from eleven am till 11 pm";
+                    speak(openingstijd, "openingstijd", true);
+                    animateTxt(txtlisten, "Every day: 11:00 - 23:00");
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
 
     /**
