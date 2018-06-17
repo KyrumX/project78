@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-
+    android:id="@+id/rel"
     tools:context=".MainActivity">
 
     <View
@@ -37,7 +37,6 @@
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="21dp"
-        android:text="Preparing the application"
         android:textAppearance="@android:style/TextAppearance.Material.Small"
         android:textColor="@android:color/white"
         android:textSize="14sp" />
@@ -84,7 +83,7 @@
         android:background="@drawable/textbackground"
         android:paddingLeft="20dp"
         android:paddingRight="20dp"
-        android:text="Hey, I'm Iris. I will be your Smartwaiter today. Commence by saying &quot;Hey Iris&quot;."
+        android:text="Hey, I'm Iris. I will be your Smartwaitress today. Commence by saying &quot;Hey Iris&quot;."
         android:textColor="@android:color/white" />
 
     <TextView

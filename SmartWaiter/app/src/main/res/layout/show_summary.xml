@@ -85,10 +85,12 @@
 
     <TableLayout
         android:id="@+id/table"
-        android:layout_width="325dp"
-        android:layout_height="133dp"
-        android:layout_alignBottom="@+id/result_text"
+        android:layout_width="354dp"
+        android:layout_height="147dp"
+        android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
+        android:layout_marginTop="148dp"
+        android:padding="5px"
         android:scrollbars="vertical">
 
         <TableRow

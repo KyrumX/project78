@@ -58,15 +58,17 @@ import static team.smartwaiter.tools.GeneralTools.setAlphaAnimation;
 public class MainActivity extends Activity implements edu.cmu.pocketsphinx.RecognitionListener, android.speech.RecognitionListener, TextToSpeechIniListener {
     private TextToSpeechInitializer i;
     private TextToSpeech talk;
-    boolean hasSaidHeyIris = false;
-    private TextView status;
+    static boolean hasSaidHeyIris = false;
+    private static TextView status;
     public static TypeWriter txtlisten;
     public static OrderDataSingleton orderDataSingleton = OrderDataSingleton.getInstance();
-    private ProgressBar progresslisten;
+    private static ProgressBar progresslisten;
     public static Handler handler = new Handler();
     private static boolean hasOrdered = false;
     private boolean flag = false;
     private boolean hasLeftBeginScreen = false;
+    private boolean hasShownSummary = false;
+    private TextView example;
     private Fade animator;
     private String[] voorbeeldzinnen = new String[5];
     private boolean notInListenContentView = false;
@@ -77,6 +79,7 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
     final SpeechRecognizer speech = SpeechRecognizer.createSpeechRecognizer(this);
     final Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
     private static Intent intentmenu;
+    public TableLayout stk;
 
     private final int REQ_CODE_SPEECH_INPUT = 100;
 
@@ -98,11 +101,15 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
 
         voorbeeldzinnen = new String[]{getString(R.string.cap1), getString(R.string.cap2), getString(R.string.cap3), getString(R.string.cap4), getString(R.string.cap5)};
 
+        this.example = findViewById(R.id.example);
+        this.animator = new Fade(this.example, voorbeeldzinnen, 6000);
         startExamples();
 
         final TextToSpeechIniListener ini = this;
 
         txtlisten = (TypeWriter) findViewById(R.id.txtlisten);
+
+        stk = (TableLayout) findViewById(R.id.table);
 
         AsyncTask.execute(new Runnable() {
             @Override
@@ -123,9 +130,11 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
 
         status = findViewById(R.id.status);
         setAlphaAnimation(status);
-//        updateStatus("Waiting for 'hey Iris'", false);
+
         progresslisten = findViewById(R.id.progresslisten);
         progresslisten.setVisibility(View.GONE);
+
+        updateStatus("Preparing Application",  true);
 
         TextView orderTextView = (TextView) findViewById(R.id.orderTextView);
         orderTextView.setText("#order: " + Integer.toString(orderDataSingleton.getOrderID()));
@@ -186,7 +195,13 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
             notInListenContentView = true;
             System.out.println("SHOWING SUMMARY----------------------");
             getOrderSummary();
+            hasShownSummary = true;
+            updateStatus("Waiting for 'hey Iris'", false);
             // if no order has been placed yet
+        }else if (closingTime(matches)){
+            updateStatus("Waiting for 'hey Iris'", false);
+            startListening(KWS_SEARCH);
+            System.out.println("closingtime returned");
         }else if (!hasOrdered) {
 
             // if it doesn't have keywords for information e.g. 'allergies' or 'information'
@@ -335,7 +350,7 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
     /**
      This method updates the status bar found at the top of the application
      */
-    public void updateStatus(String text, boolean withProgress){
+    public static void updateStatus(String text, boolean withProgress){
         hasSaidHeyIris = false;
         status.setText(text);
 //        setAlphaAnimation(status);
@@ -455,9 +470,31 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
             return;
         }
 
-        if (!hasLeftBeginScreen)
-            stopExamples();
-            hasLeftBeginScreen = true;
+        stopExamples();
+
+        int count = 0;
+        if (hasShownSummary)
+//            count = stk.getChildCount();
+//            System.out.println("count: " + count);
+//            System.out.println("count: " + count);
+//            System.out.println("count: " + count);
+//            System.out.println("count: " + count);
+//            System.out.println("count: " + count);
+//            System.out.println("count: " + count);
+//            System.out.println("count: " + count);
+//            System.out.println("count: " + count);
+//            System.out.println("count: " + count);
+//            if (count != 0)
+//                System.out.println("count: " + count);
+//                for(int i=0;i<count;i++)
+//                    System.out.println("count = " + count);
+//                    stk.removeViewAt(count - 1);
+//            if (stk != null)
+//                findViewById(android.R.id.content).table.removeAllViews()
+//                stk = null;
+            cleanTable(stk);
+            txtlisten.setVisibility(View.VISIBLE);
+            hasShownSummary = false;
 
         String text = hypothesis.getHypstr();
         System.out.println("THIS IS TEXT: " + text);
@@ -511,6 +548,7 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
                         .setText("Failed to init recognizer " + result);
             } else {
                 activityReference.get().startListening(KWS_SEARCH);
+                updateStatus("Waiting for 'hey Iris'", false);
             }
         }
     }
@@ -564,13 +602,11 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
     public void getOrderSummary(){
         TextView orderTextView = (TextView) findViewById(R.id.orderTextView);
         orderTextView.setText("#order: " + Integer.toString(orderDataSingleton.getOrderID()));
-
         DecimalFormat df = new DecimalFormat("#.00");
 
         HashMap sum = orderProcessor.getOrderLines(orderDataSingleton.getOrderID());
         System.out.println("THIS IS SUM: " + sum);
         Set<String> keys = sum.keySet();
-
 
         double totalsum = orderProcessor.getOrderSum();
         System.out.println(totalsum);
@@ -580,15 +616,18 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
             System.out.println("is equal to 0");
             startListening(KWS_SEARCH);
         } else {
-            TableLayout stk = (TableLayout) findViewById(R.id.table);
+            stk = (TableLayout) findViewById(R.id.table);
+            stk.setVisibility(View.VISIBLE);
+            txtlisten.setVisibility(View.GONE);
             TableRow tbrow0 = new TableRow(this);
 
-            List<String> headers = Arrays.asList("Meal", "Unit Price", "Amount", "Total Sum");
+            List<String> headers = Arrays.asList("Meal ", " Unit Price ", " Amount ", " Total Sum");
 
             for (int i = 0; i < 4; i++) {
                 TextView tableheaders = new TextView(this);
                 tableheaders.setText(headers.get(i));
                 tbrow0.addView(tableheaders);
+
             }
 
             stk.addView(tbrow0);
@@ -599,14 +638,17 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
                 t2v.setText("Product " + key);
                 t2v.setGravity(Gravity.LEFT);
                 tbrow.addView(t2v);
+
                 TextView t3v = new TextView(this);
                 t3v.setText("€" + getInformation.showInformation(key, "price"));
                 t3v.setGravity(Gravity.CENTER);
                 tbrow.addView(t3v);
+
                 TextView t4v = new TextView(this);
                 t4v.setText("" + sum.get(key));
                 t4v.setGravity(Gravity.CENTER);
                 tbrow.addView(t4v);
+
                 TextView t1v = new TextView(this);
                 Double calc = Double.parseDouble(getInformation.showInformation(key, "price")) * Double.parseDouble(sum.get(key).toString());
                 t1v.setText("€" + df.format(calc).toString());
@@ -633,26 +675,67 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
         }
     }
 
-    public void startExamples(){
+    private void cleanTable(TableLayout table) {
 
-        System.out.println(voorbeeldzinnen[0]);
+        int childCount = table.getChildCount();
+
+        // Remove all rows except the first one
+        if (childCount > 1) {
+            table.removeViews(0, childCount);
+        }
+    }
+
+    public void startExamples(){
+//        System.out.println(voorbeeldzinnen[0]);
         Typeface roboto = Typeface.createFromAsset(getAssets(), "fonts/roboto.ttf");
 
-        TextView speech = (TextView) findViewById(R.id.example);
-        speech.setTypeface(roboto, Typeface.ITALIC);
-        System.out.println(speech.getTypeface());
+//        TextView example = (TextView) findViewById(R.id.example);
+        example.setTypeface(roboto, Typeface.ITALIC);
+//        System.out.println(example.getTypeface());
 
-        this.animator = new Fade(speech, voorbeeldzinnen, 6000);
+//        this.animator = new Fade(example, voorbeeldzinnen, 6000);
         this.animator.startAnimation();
-        this.animator.end();
-
     }
 
     public void stopExamples(){
         this.animator.end();
-        TextView example = (TextView) findViewById(R.id.example);
+        example = (TextView) findViewById(R.id.example);
         TextView exampletitle = (TextView) findViewById(R.id.exampletitle);
         example.setVisibility(View.GONE);
         exampletitle.setVisibility(View.GONE);
+    }
+
+    public Boolean closingTime(List<String> output) {
+        List<String> generalcloselist = Arrays.asList("close", "closed", "shutdown", "closing");
+        List<String> generaltimelist = Arrays.asList("open", "opened", "available", "days");
+        List<String> generalholidaylist = Arrays.asList("holiday", "vacation", "holidays", "christmas", "easter");
+
+        for (String line : output) {
+            for (String word : generalholidaylist) {
+                if (line.toLowerCase().contains(word)) {
+                    String feestdagen = "We are closed on all national holidays";
+                    speak(feestdagen, "feestdagen", true);
+                    animateTxt(txtlisten, "We are closed on all national holidays");
+                    return true;
+                }
+            }
+            for (String word : generalcloselist) {
+                if (line.toLowerCase().contains(word)) {
+                    String sluitingstijd = "We close at eleven pm.";
+                    speak(sluitingstijd, "sluitingstijd", true);
+                    animateTxt(txtlisten, "We close at 23:00");
+                    return true;
+                }
+            }
+            for (String word : generaltimelist) {
+                if (line.toLowerCase().contains(word)) {
+                    String openingstijd = "We are open every day of the week from eleven am till 11 pm";
+                    speak(openingstijd, "openingstijd", true);
+                    animateTxt(txtlisten, "Every day: 11:00 - 23:00");
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
