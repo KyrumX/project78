@@ -24,22 +24,6 @@ public class Serializer {
         return l;
     }
 
-    public static HashMap<Integer, String> menuItems(JSONArray jsonArray) {
-        HashMap<Integer, String> hm = new HashMap<Integer, String>();
-
-        if(jsonArray == null)
-            return hm;
-
-        for(int i = 0; i < jsonArray.length(); i++) {
-            try {
-                hm.put(((int) jsonArray.getJSONObject(i).get("id")), jsonArray.getJSONObject(i).get("name").toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        return hm;
-    }
-
     public static HashMap<String, String> menuItemInformation(JSONObject jsonObject) {
         HashMap<String, String> hm = new HashMap<String, String>();
 
@@ -92,10 +76,26 @@ public class Serializer {
         return sum;
     }
 
+    public static HashMap<Integer, String> MenuItems(JSONArray jsonArray) {
+        HashMap<Integer, String> hm = new HashMap<Integer, String>();
+
+        if(jsonArray == null)
+            return hm;
+
+        for(int i = 0; i < jsonArray.length(); i++) {
+            try {
+                hm.put(((int) jsonArray.getJSONObject(i).get("id")), jsonArray.getJSONObject(i).get("name").toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return hm;
+    }
+
     public static HashMap<String, Integer> orderLines(JSONObject jsonObject) {
         HashMap<String, Integer> result = new HashMap();
         ApiController controller = new ApiController();
-        HashMap menu = Serializer.menuItems(controller.getMenu());
+        HashMap menu = Serializer.MenuItems(controller.getMenu());
 
         if (jsonObject == null) {
             return result;

@@ -25,8 +25,8 @@ public class OrderProcessor {
         }
     }
 
-    private int linkNameWithID(String name) {
-        HashMap<Integer, String> hm = Serializer.menuItems(controller.getMenu());
+    public int linkNameWithID(String name) {
+        HashMap<Integer, String> hm = Serializer.MenuItems(controller.getMenu());
         int keyFound = 0;
         for (int key : hm.keySet()) {
             if (hm.get(key).equals(name)) {
@@ -45,10 +45,10 @@ public class OrderProcessor {
         return Serializer.orderSum(jsonObject);
     }
 
-    public HashMap<String, Integer> getOrderLines() {
+    public HashMap<String, Integer> getOrderLines(int id) {
         int orderID = OrderDataSingleton.getInstance().getOrderID();
 
-        JSONObject jsonObject = controller.getOrderLinesAPI(1);
+        JSONObject jsonObject = controller.getOrderLinesAPI(id);
 
         return Serializer.orderLines(jsonObject);
     }

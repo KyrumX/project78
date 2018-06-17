@@ -16,7 +16,7 @@ public class ApiController {
     public void Print() {
 
         //Ralph, please take a look at my trial code here:
-        HashMap<Integer, String> hm = Serializer.menuItems(getMenu()); // <-- Link the menu item names with ids
+        HashMap<Integer, String> hm = Serializer.MenuItems(getMenu()); // <-- Link the menu item names with ids
         System.out.println(hm);
         int keyV = 0;
         for (int key : hm.keySet()) {
@@ -162,36 +162,11 @@ public class ApiController {
         return null;
     }
 
-    public JSONArray getItemsThatGoWellWith(int itemID) {
-        String RequestedUrl = DEFAULT_URL + "/api/goeswellwith/";
-        String result;
-        JSONArray jsonArray;
-        HttpRequest request = new HttpGetRequest();
-
-        RequestedUrl = RequestedUrl += itemID;
-
-        try {
-            result = request.execute(RequestedUrl).get();
-            Object json = new JSONTokener(result).nextValue();
-            if(json instanceof JSONArray) {
-                jsonArray = new JSONArray(result);
-                return jsonArray;
-            }
-            else if (json instanceof JSONObject) {
-                return null;
-            }
-        } catch (Exception e ) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
     public JSONObject getOrderLinesAPI(int orderID) {
         String RequestedUrl = DEFAULT_URL + "/api/orders/";
         String result;
         JSONArray jsonArray;
         HttpRequest request = new HttpGetRequest();
-
         RequestedUrl = RequestedUrl += orderID;
 
         try {
@@ -209,5 +184,26 @@ public class ApiController {
         return null;
     }
 
+    public JSONArray getItemsThatGoWellWith(int itemID) {
+        String RequestedUrl = DEFAULT_URL + "/api/goeswellwith/";
+        String result;
+        JSONArray jsonArray;
+        HttpRequest request = new HttpGetRequest();
+        RequestedUrl = RequestedUrl += itemID;
 
+        try {
+            result = request.execute(RequestedUrl).get();
+            Object json = new JSONTokener(result).nextValue();
+            if(json instanceof JSONArray) {
+                jsonArray = new JSONArray(result);
+                return jsonArray;
+            }
+            else if (json instanceof JSONObject) {
+                return null;
+            }
+        } catch (Exception e ) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

@@ -1,91 +1,112 @@
 package team.smartwaiter;
 
-import android.Manifest;
 import android.app.Activity;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
-import android.speech.tts.UtteranceProgressListener;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.view.View;
-import android.widget.Button;
-import android.widget.ProgressBar;
-import android.widget.TextView;
+import android.os.Bundle;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.Arrays;
+import java.util.List;
 import java.util.HashMap;
+import java.util.*;
+
+import android.content.ActivityNotFoundException;
+
+import android.speech.SpeechRecognizer;
+
+import android.support.annotation.NonNull;
+import android.view.Gravity;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.TableLayout;
+import android.widget.TableRow;
+import android.widget.TextView;
+import android.speech.RecognizerIntent;
+import android.content.Intent;
+
+import java.util.ArrayList;
 import java.util.Locale;
 
 import edu.cmu.pocketsphinx.Assets;
 import edu.cmu.pocketsphinx.Hypothesis;
-import edu.cmu.pocketsphinx.RecognitionListener;
-import edu.cmu.pocketsphinx.SpeechRecognizer;
 import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
 import team.smartwaiter.TTS.TextToSpeechIniListener;
 import team.smartwaiter.TTS.TextToSpeechInitializer;
 import team.smartwaiter.api.ApiController;
+import team.smartwaiter.api.MenuProcessor;
+import team.smartwaiter.api.OrderProcessor;
+import team.smartwaiter.api.Serializer;
 import team.smartwaiter.storage.OrderDataSingleton;
 import team.smartwaiter.tools.Fade;
+import team.smartwaiter.tools.GeneralTools;
+import team.smartwaiter.tools.TypeWriter;
 
+import static team.smartwaiter.tools.GeneralTools.animateTxt;
 import static team.smartwaiter.tools.GeneralTools.setAlphaAnimation;
 
+public class MainActivity extends Activity implements edu.cmu.pocketsphinx.RecognitionListener, android.speech.RecognitionListener, TextToSpeechIniListener {
+    private TextToSpeechInitializer i;
+    private TextToSpeech talk;
+    static boolean hasSaidHeyIris = false;
+    private static TextView status;
+    public static TypeWriter txtlisten;
+    public static OrderDataSingleton orderDataSingleton = OrderDataSingleton.getInstance();
+    private static ProgressBar progresslisten;
+    private static boolean hasOrdered = false;
+    private boolean flag = false;
+    private boolean hasShownSummary = false;
+    private TextView example;
+    private Fade animator;
+    private String[] voorbeeldzinnen = new String[5];
+    private boolean notInListenContentView = false;
+    private static final String KWS_SEARCH = "wakeup";
+    private static final String KEYPHRASE = "hey iris";
+    private static final int PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
+    private edu.cmu.pocketsphinx.SpeechRecognizer recognizer;
+    final SpeechRecognizer speech = SpeechRecognizer.createSpeechRecognizer(this);
+    final Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+    public TableLayout stk;
+    private Button infoButton;
 
-public class MainActivity extends Activity implements
-        RecognitionListener, TextToSpeechIniListener{
+    private final int REQ_CODE_SPEECH_INPUT = 100;
+
+
+    //VARS for processing orders
+    HashMap orderpairs = new HashMap();
+    ApiController controller = new ApiController();
+    OrderProcessor orderProcessor = new OrderProcessor();
+    MenuProcessor menuProcessor = new MenuProcessor();
 
     public MainActivity() {
         orderDataSingleton.update();
     }
 
-    private final ApiController API = new ApiController();
-    public static TextView orderTextView;
-    private TextView idTextView, txt;
-    public static OrderDataSingleton orderDataSingleton = OrderDataSingleton.getInstance();
-
-    private TextToSpeech talk;
-    private TextToSpeechInitializer i;
-    private boolean flag = false;
-
-    /* Named searches allow to quickly reconfigure the decoder */
-    private static final String KWS_SEARCH = "wakeup";
-//    private static final String ORDER_SEARCH = "order";
-//    private static final String MENU_SEARCH = "menu";
-
-    /* Keyword we are looking for to activate menu */
-    private static final String KEYPHRASE = "hey iris";
-
-    private static final String OTHER = "back";
-
-    private static ProgressBar progress;
-    private static TextView introText;
-    private static Button testbutton;
-    private Button infoButton;
-
-    private Intent in = new Intent(this, TextToSpeechInitializer.class);
-    private String[] voorbeeldzinnen = new String[5];
-    private HashMap<String, String> speakingprogress = new HashMap<String, String>();
-
-    /* Used to handle permission request */
-    private static final int PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
-
-    private SpeechRecognizer recognizer;
-    private HashMap<String, Integer> captions;
-
     @Override
-    public void onCreate(Bundle state) {
+    protected void onCreate(Bundle state) {
         super.onCreate(state);
         setContentView(R.layout.activity_main);
 
+        i = new TextToSpeechInitializer(this, Locale.US, this);
+
+        voorbeeldzinnen = new String[]{getString(R.string.cap1), getString(R.string.cap2), getString(R.string.cap3), getString(R.string.cap4), getString(R.string.cap5)};
+
+        this.example = findViewById(R.id.example);
+        this.animator = new Fade(this.example, voorbeeldzinnen, 6000);
+        startExamples();
+
         final TextToSpeechIniListener ini = this;
 
-        i = new TextToSpeechInitializer(this, Locale.US, this);
+        txtlisten = findViewById(R.id.txtlisten);
+
+        stk = findViewById(R.id.table);
 
         AsyncTask.execute(new Runnable() {
             @Override
@@ -94,115 +115,252 @@ public class MainActivity extends Activity implements
             }
         });
 
-        voorbeeldzinnen = new String[]{getString(R.string.cap1), getString(R.string.cap2), getString(R.string.cap3), getString(R.string.cap4), getString(R.string.cap5)};
+        speech.setRecognitionListener(this);
 
-        orderTextView = (TextView) findViewById(R.id.orderTextView);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+
+//        Voor Nederlands, gebruik onderstaande code. Apparaat moet wel ingesteld zijn op Nederlands.
+//        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
+
+        status = findViewById(R.id.status);
+        setAlphaAnimation(status);
+
+        progresslisten = findViewById(R.id.progresslisten);
+        progresslisten.setVisibility(View.GONE);
+
+        updateStatus("Preparing Application",  true);
+
+        TextView orderTextView = findViewById(R.id.orderTextView);
         orderTextView.setText("#order: " + Integer.toString(orderDataSingleton.getOrderID()));
 
         // Create InfoButton. When pressed / when hearing "help", it shows example commands.
-        infoButton = findViewById(R.id.button6);
-        infoButton.setVisibility(View.VISIBLE);
-
+        infoButton = (Button) findViewById(R.id.infobutton);
+        Typeface roboto = Typeface.createFromAsset(getAssets(), "fonts/roboto.ttf");
+        infoButton.setTypeface(roboto);
         infoButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view) {
                 speak("Welcome. Before you give me a command, please say, hey IRIS. " +
-                        "To order, say, I would like to order, amount, dish. " +
+                        "To order, please say: I would like to order: amount, dish. " +
                         "I will ask you for confirmation before processing the order. " +
-                        "For advice, say, I would like advice about, dish. " +
-                        "For the bill, say, I would like to pay." +
-                        "Enjoy your meal!", "info");
-                finish();
+                        "For advice, please say: I would like advice about: dish. " +
+                        "For the bill, please say: I would like to pay." +
+                        "Enjoy your meal!", "info", true, false);
             }
         });
-        /*
-        reorder = findViewById(R.id.button2);
-        reorder.setVisibility(View.GONE);
 
-        reorder.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view) {
-                hasOrdered = false;
-                Intent intent = getIntent();
-                finish();
-                startActivity(intent);
-            }
-        });
-        */
-
-        txt = (TextView) findViewById(R.id.result_text);
-//        txt.setText("Starting text");
-
-//        Typeface roboto = Typeface.createFromAsset(getAssets(), "fonts/roboto.ttf");
-//        txt.setTypeface(roboto);
-
-        startExamples();
-
-        progress = findViewById(R.id.progressBar);
-
-//        // Prepare the data for UI
-        captions = new HashMap<>();
-        captions.put(KWS_SEARCH, R.string.kws_caption);
-
-        Typeface roboto = Typeface.createFromAsset(getAssets(), "fonts/roboto.ttf");
-
-        introText = findViewById(R.id.caption_text);
-        introText.setTypeface(roboto);
-
-//        ((TextView) findViewById(R.id.caption_text))
-//                .setText("Preparing the application");
-
-        // Check if user has given permission to record audio
-        int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.RECORD_AUDIO);
-        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSIONS_REQUEST_RECORD_AUDIO);
-            return;
-        }
-        // Recognizer initialization is a time-consuming and it involves IO,
-        // so we execute it in async task
         new SetupTask(this).execute();
+
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public void onReadyForSpeech(Bundle bundle) {
+    }
+
+
+    @Override
+    public void onError(int i) {
+        animateTxt(txtlisten, "I didn't quite catch that..");
+        updateStatus("Waiting for 'hey iris'", false);
+        startListening(KWS_SEARCH);
+    }
+
+    @Override
+    public void onResults(Bundle results) {
+        List<String> summarylist = Arrays.asList("overview", "summary");
+        ArrayList<String> matches = results
+                .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+
+        final String output = matches.get(0).toLowerCase();
+        System.out.println("Output: " + output);
+
+        List<String> menu;
+        menu = Serializer.convertMenu(controller.getMenu(), "name");
+
+        // if no order has been placed yet
+        if (GeneralTools.checkForWords(matches, summarylist) != "null") {
+            notInListenContentView = true;
+            System.out.println("SHOWING SUMMARY----------------------");
+            getOrderSummary();
+            hasShownSummary = true;
+            updateStatus("Waiting for 'hey Iris'", false);
+            // if no order has been placed yet
+        }else if (closingTime(matches)) {
+            updateStatus("Waiting for 'hey Iris'", false);
+            System.out.println("closingtime returned");
+        } else if(getGoesWellWith(matches, menu)) {
+            updateStatus("Waiting for 'hey Iris'", false);
+            System.out.println("GoesWellWith returned");
+        } else if (getInvoicePrice(matches)) {
+                System.out.println("total price returned");
+        }else if (!hasOrdered) {
+
+            // if it doesn't have keywords for information e.g. 'allergies' or 'information'
+            if (!hasInfo(menu, matches)) {
+                getMeal(menu, matches);
+            }
+
+        } else {
+
+            // if an order has been placed, this will confirm or cancel
+            List<String> confirmationlist = Arrays.asList("yes", "yeah", "sure", "alright", "okay", "affirmative");
+            List<String> denylist = Arrays.asList("no", "nope", "nah", "not", "cancel");
+
+            // checks relation between the strings above and the output gotten from user speech
+            if (GeneralTools.checkForWords(matches, confirmationlist) != "null"){
+                speak("Order confirmed.", "confirmed", true, false);
+                hasOrdered = false;
+
+                //Now that one orderline has been confirmed (e.g. 2 cola's) we need to push it to the db
+                orderProcessor.createNewOrderLine(orderpairs); // <-- Process all the ordered items
+
+                //OrderLines have been processed.
+
+                animateTxt(txtlisten, "Order confirmed.");
+
+                // this updates the status bar at the top of the application
+                updateStatus("Waiting for 'hey Iris'", false);
+            } else if(GeneralTools.checkForWords(matches, denylist) != "null"){
+                speak("Okay, order canceled","canceled", true, false);
+                animateTxt(txtlisten, "Order canceled.");
+                hasOrdered = false;
+                updateStatus("Waiting for 'hey Iris'", false);
+            } else {
+                speak("Sorry I didn't catch that, can you say that again?", "failedtohear", true, true);
+                animateTxt(txtlisten, "Didn't catch that, can you say that again?");
+            }
+        }
+
+        System.out.println("Got out of !hasordered if clause");
+    }
+
+    /**
+     This method checks if the user speech contains an info-type message like 'allergies' or 'info'
+     */
+    public Boolean hasInfo(List<String> consumables, List<String> output) {
+//        startListening(KWS_SEARCH);
+        List<String> generalinfolist = Arrays.asList("description", "information", "info", "about");
+        List<String> price = Arrays.asList("price", "cost");
+        List<String> allergies = Arrays.asList("allergy", "allergies", "allergic");
+
+        String menuitem = GeneralTools.checkForWords(output, consumables);
+
+
+        if (menuitem == "null"){
+            // couldn't find a menuitem in the output
+            return false;
+        }
+
+        String generalinfo;
+        String infotype;
+        if ((generalinfo = GeneralTools.checkForWords(output, generalinfolist, true)) != "null") {
+            // user asks for description of a product
+            System.out.println("debug hasinfo_____________________");
+            System.out.println(generalinfo);
+            System.out.println(menuitem);
+            System.out.println("end debug hasinfo_________________");
+            showinfo(generalinfo, menuitem);
+            return true;
+        } else if ((infotype = (GeneralTools.checkForWords(output, price, true))) != "null") {
+            // user asks for the price of a product
+            showinfo(infotype, menuitem, "The price of " + menuitem + " is ", "euros", "€");
+            return true;
+        } else if ((infotype = (GeneralTools.checkForWords(output, allergies, true))) != "null") {
+            // user asks about potential allergy substances in a product
+            if (getInformation.showInformation(menuitem, "allergy").equals("none")) {
+                // TODO
+                speak(menuitem + " contains no potential allergy substances", "allergy_hasinfo", true, false);
+                animateTxt(txtlisten, "No allergies inside " + menuitem);
+                updateStatus("Waiting for 'hey Iris'", false);
+            } else {
+                showinfo(infotype, menuitem, menuitem + " ");
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public void onPartialResults(Bundle bundle) {
+    }
+
+    @Override
+    public void onEvent(int i, Bundle bundle) {
+
+    }
+
+    /**
+     This initiates TextToSpeech
+     */
+    public void speak(String text, String uttID, boolean... r){
+        recognizer.stop();
+        HashMap<String, String> map = new HashMap<String, String>();
+        map.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, uttID);
+        if (r.length != 0){
+            i.speak(text, map, r);
+        } else {
+            i.speak(text, map);
+        }
+    }
+
+    /**
+     This shows information about the product
+     */
+    public void showinfo(String infotype, String menuitem, String... args){
+        String prefix =  (args.length == 0) ? "" : args[0];
+        String suffix = (args.length < 2) ? "" : args[1];
+        String prefix_text = (args.length < 3) ? "" : args[2];
+
+        if (suffix.equals("euros")){
+            System.out.println("normally for func outputMoney: " + getInformation.showInformation(menuitem, infotype));
+            speak(prefix + GeneralTools.outputMoney(getInformation.showInformation(menuitem, infotype)), "euros", true, false);
+        } else {
+            speak(prefix + getInformation.showInformation(menuitem, infotype), "info1", true, false);
+        }
+
+        animateTxt(txtlisten, GeneralTools.capitalize(menuitem) + "\n\n" + prefix_text + getInformation.showInformation(menuitem, infotype));
+
+        updateStatus("Waiting for 'hey Iris'", false);
+    }
+
+    /**
+     This method updates the status bar found at the top of the application
+     */
+    public static void updateStatus(String text, boolean withProgress){
+        hasSaidHeyIris = false;
+        status.setText(text);
+        if(!withProgress){
+            progresslisten.setVisibility(View.INVISIBLE);
+        } else {
+            progresslisten.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     If TTS has been succesful
+     */
     @Override
     public void onSuccess(TextToSpeech tts) {
         this.talk = tts;
         flag = true;
-//        startService(in);
-        this.talk.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-            @Override
-            public void onStart(String s) {
-                System.out.println("IS THIS WORKINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
-                recognizer.stop();
-            }
-
-            @Override
-            public void onDone(String s) {
-                System.out.println("DoneDOINGIT_____________________________________________");
-                recognizer.startListening(KWS_SEARCH);
-            }
-
-            @Override
-            public void onError(String s) {
-                System.out.println("Error");
-            }
-        });
-        if (orderDataSingleton.isFirstLaunch())
-            speak("Hi, my name is Iris. I will be your smart waitress today.", "main");
-        else {
-            speak("Please activate me when you have any questions or want to place an order. " +
-                    "If you need any assistance, press the information icon or say: help.", "");
-        }
     }
 
     @Override
     public void onFinishedSpeaking() {
-        recognizer.startListening(KWS_SEARCH);
-        System.out.println("on finished speaking");
+        System.out.println("Finished speaking.");
     }
 
     @Override
     public void onBeginSpeaking() {
-        recognizer.stop();
+
     }
 
     @Override
@@ -212,7 +370,120 @@ public class MainActivity extends Activity implements
     }
 
     @Override
-    public void execReprompt() {
+    public void execReprompt(boolean directReprompt) {
+        if (directReprompt)
+            this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    speech.startListening(intent);
+                }
+            });
+        else {
+            startListening(KWS_SEARCH);
+        }
+    }
+
+    private void getMeal(List<String> typelist,  ArrayList<String> output){
+//        startListening(KWS_SEARCH);
+        orderpairs.clear();
+        Logic logic = new Logic(typelist, output);
+        orderpairs = logic.generate();
+
+        System.out.println("typelist: " + typelist);
+        System.out.println("orderpairs: " + orderpairs);
+
+        if(orderpairs.size() < 1){
+            System.out.println("Get meal couldn't find anything");
+            speak("I can't seem to figure out what you said, please try again.", "failed1", true, true);
+            animateTxt(txtlisten, "I didn't quite catch that.");
+            hasOrdered = false;
+        } else {
+            Set<String> keys = orderpairs.keySet();
+
+            String order = "Order:\n";
+            String speakorder = "Your order consists of the following: ";
+
+            for (String key : keys) {
+                speakorder += orderpairs.get(key) + " " + key;
+                order += key + " | amount: " + orderpairs.get(key) + "\n";
+            }
+
+            final String order2 = order;
+
+            speakorder += ". Confirm by saying yes";
+
+            speak(speakorder, "order", true, true);
+
+            animateTxt(txtlisten, order2);
+
+            System.out.println("ORDERPAIRS: " + orderpairs);
+
+            updateStatus("Waiting for response..", true);
+            hasOrdered = true;
+        }
+    }
+
+
+    // START CONTINUOUS SPEECH
+
+
+    @Override
+    public void onBeginningOfSpeech() {
+    }
+
+    @Override
+    public void onRmsChanged(float v) {
+
+    }
+
+    @Override
+    public void onBufferReceived(byte[] bytes) {
+
+    }
+
+    @Override
+    public void onEndOfSpeech() {
+    }
+
+    @Override
+    public void onPartialResult(Hypothesis hypothesis) {
+        if (hypothesis == null) {
+            return;
+        }
+
+        stopExamples();
+
+        if (hasShownSummary)
+            cleanTable(stk);
+            txtlisten.setVisibility(View.VISIBLE);
+            hasShownSummary = false;
+
+        String text = hypothesis.getHypstr();
+        System.out.println("THIS IS TEXT: " + text);
+        if (text.equals(KEYPHRASE)) {
+            hasSaidHeyIris = true;
+            updateStatus("Processing...", true);
+            try {
+                recognizer.stop();
+                speech.startListening(intent);
+            } catch (ActivityNotFoundException a) {
+                System.out.println("activity not found exception");
+            }
+        }
+    }
+
+    @Override
+    public void onResult(Hypothesis hypothesis) {
+        recognizer.stop();
+    }
+
+    @Override
+    public void onError(Exception e) {
+
+    }
+
+    @Override
+    public void onTimeout() {
 
     }
 
@@ -234,98 +505,19 @@ public class MainActivity extends Activity implements
         }
         @Override
         protected void onPostExecute(Exception result) {
-            progress.setVisibility(View.GONE);
-            introText.setText("Waiting for 'hey Iris'");
-            setAlphaAnimation(introText);
             if (result != null) {
-                ((TextView) activityReference.get().findViewById(R.id.caption_text))
+                ((TextView) activityReference.get().findViewById(R.id.txtlisten))
                         .setText("Failed to init recognizer " + result);
             } else {
-//                activityReference.get().switchSearch(KWS_SEARCH);
+                activityReference.get().startListening(KWS_SEARCH);
+                updateStatus("Waiting for 'hey Iris'", false);
             }
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions, @NonNull  int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (requestCode == PERMISSIONS_REQUEST_RECORD_AUDIO) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Recognizer initialization is a time-consuming and it involves IO,
-                // so we execute it in async task
-                new SetupTask(this).execute();
-            } else {
-                finish();
-            }
-        }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        if (recognizer != null) {
-            recognizer.stop();
-            recognizer.shutdown();
-//            stopService()
-        }
-    }
-
-    /**
-     * In partial result we get quick updates about current hypothesis. In
-     * keyword spotting mode we can react here, in other modes we need to wait
-     * for final result in onResult.
-     */
-    @Override
-    public void onPartialResult(Hypothesis hypothesis) {
-        if (hypothesis == null)
-            return;
-
-        String text = hypothesis.getHypstr();
-        System.out.println("THIS IS TEXT: " + text);
-        if (text.equals(KEYPHRASE)) {
-//            txt.setText("hey customer, how are you doing today?");
-//            speak("hey customer, how can I help you?");
-//            stopService(in);
-            recognizer.stop();
-            Intent intent = new Intent(this, ListenActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity ( intent );
-            recognizer.shutdown();
-            finish();
-        }
-    }
-
-    /**
-     * This callback is called when we stop the recognizer.
-     */
-    @Override
-    public void onResult(Hypothesis hypothesis) {
-        if (hypothesis != null) {
-
-        }
-    }
-
-    @Override
-    public void onBeginningOfSpeech() {
-
-    }
-
-    /**
-     * We stop recognizer here to get a final result
-     */
-    @Override
-    public void onEndOfSpeech() {
-//        if (!recognizer.getSearchName().equals(KWS_SEARCH))
-//            switchSearch(KWS_SEARCH);
-    }
-
-    private void switchSearch(String searchName) {
+    public void startListening(String searchName){
         recognizer.stop();
 
-        // If we are not spotting, start listening with timeout (10000 ms or 10 seconds).
         if (searchName.equals(KWS_SEARCH))
             recognizer.startListening(searchName);
         else
@@ -342,7 +534,7 @@ public class MainActivity extends Activity implements
                 .setDictionary(new File(assetsDir, "cmudict-en-us.dict"))
 //                .setRawLogDir(assetsDir) // To disable logging of raw audio comment out this call (takes a lot of space on the device)
                 .getRecognizer();
-        recognizer.addListener(this);
+        recognizer.addListener((edu.cmu.pocketsphinx.RecognitionListener) this);
 
         /* In your application you might not need to add all those searches.
           They are added here for demonstration. You can leave just one.
@@ -354,36 +546,208 @@ public class MainActivity extends Activity implements
     }
 
     @Override
-    public void onError(Exception error) {
-        ((TextView) findViewById(R.id.caption_text)).setText(error.getMessage());
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions, @NonNull  int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == PERMISSIONS_REQUEST_RECORD_AUDIO) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Recognizer initialization is a time-consuming and it involves IO,
+                // so we execute it in async task
+                new MainActivity.SetupTask(this).execute();
+            } else {
+                finish();
+            }
+        }
     }
 
-    @Override
-    public void onTimeout() {
-        switchSearch(KWS_SEARCH);
+    public void getOrderSummary(){
+        TextView orderTextView = (TextView) findViewById(R.id.orderTextView);
+        orderTextView.setText("#order: " + Integer.toString(orderDataSingleton.getOrderID()));
+        DecimalFormat df = new DecimalFormat("#.00");
+
+        HashMap sum = orderProcessor.getOrderLines(orderDataSingleton.getOrderID());
+        System.out.println("THIS IS SUM: " + sum);
+        Set<String> keys = sum.keySet();
+
+        double totalsum = orderProcessor.getOrderSum();
+        System.out.println(totalsum);
+        if (totalsum == 0){
+            speak("No orders have been placed yet.", "nosummarypossible", true, false);
+            animateTxt(txtlisten, "Nothing has been order just yet. Say 'hey Iris' to place an order.");
+            System.out.println("is equal to 0");
+//            startListening(KWS_SEARCH);
+        } else {
+            stk = (TableLayout) findViewById(R.id.table);
+            stk.setVisibility(View.VISIBLE);
+            txtlisten.setVisibility(View.GONE);
+            TableRow tbrow0 = new TableRow(this);
+
+            List<String> headers = Arrays.asList("Meal ", " Unit Price ", " Amount ", " Total Sum");
+
+            for (int i = 0; i < 4; i++) {
+                TextView tableheaders = new TextView(this);
+                tableheaders.setText(headers.get(i));
+                tbrow0.addView(tableheaders);
+
+            }
+
+            stk.addView(tbrow0);
+
+            for (String key : keys) {
+                TableRow tbrow = new TableRow(this);
+                TextView t2v = new TextView(this);
+                t2v.setText("Product " + key);
+                t2v.setGravity(Gravity.LEFT);
+                tbrow.addView(t2v);
+
+                TextView t3v = new TextView(this);
+                t3v.setText("€" + getInformation.showInformation(key, "price"));
+                t3v.setGravity(Gravity.CENTER);
+                tbrow.addView(t3v);
+
+                TextView t4v = new TextView(this);
+                t4v.setText("" + sum.get(key));
+                t4v.setGravity(Gravity.CENTER);
+                tbrow.addView(t4v);
+
+                TextView t1v = new TextView(this);
+                Double calc = Double.parseDouble(getInformation.showInformation(key, "price")) * Double.parseDouble(sum.get(key).toString());
+                t1v.setText("€" + df.format(calc).toString());
+                t1v.setGravity(Gravity.CENTER);
+                tbrow.addView(t1v);
+                stk.addView(tbrow);
+            }
+
+            TableRow tbrow1 = new TableRow(this);
+            for (int x = 0; x < 3; x++) {
+                TextView tx = new TextView(this);
+                tx.setText("");
+                tbrow1.addView(tx);
+            }
+
+            TextView bill = new TextView(this);
+            bill.setText("€" + df.format(totalsum));
+            bill.setGravity(Gravity.CENTER);
+            tbrow1.addView(bill);
+
+            stk.addView(tbrow1);
+            startListening(KWS_SEARCH);
+            System.out.println(findViewById(android.R.id.content));
+        }
     }
 
-    //Aarons API tester button :)
-    public void TestLogger(View v) {
-        API.Print();
+    private void cleanTable(TableLayout table) {
+
+        int childCount = table.getChildCount();
+
+        // Remove all rows except the first one
+        if (childCount > 1) {
+            table.removeViews(0, childCount);
+        }
     }
 
     public void startExamples(){
-
-        System.out.println(voorbeeldzinnen[0]);
+//        System.out.println(voorbeeldzinnen[0]);
         Typeface roboto = Typeface.createFromAsset(getAssets(), "fonts/roboto.ttf");
-
-        TextView speech = (TextView) findViewById(R.id.example);
-        speech.setTypeface(roboto, Typeface.ITALIC);
-        System.out.println(speech.getTypeface());
-
-        Fade animator = new Fade(speech, voorbeeldzinnen, 6000);
-        animator.startAnimation();
+        example.setTypeface(roboto, Typeface.ITALIC);
+        this.animator.startAnimation();
     }
-    public void speak(String text, String uttID){
-        HashMap<String, String> map = new HashMap<String, String>();
-        map.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, uttID);
-//        talk.speak(text, TextToSpeech.QUEUE_FLUSH, map);
-        i.speak(text, map);
+
+    public void stopExamples(){
+        this.animator.end();
+        example = (TextView) findViewById(R.id.example);
+        TextView exampletitle = (TextView) findViewById(R.id.exampletitle);
+        example.setVisibility(View.GONE);
+        exampletitle.setVisibility(View.GONE);
+    }
+
+    public Boolean closingTime(List<String> output) {
+        List<String> generalcloselist = Arrays.asList("close", "closed", "shutdown", "closing");
+        List<String> generaltimelist = Arrays.asList("open", "opened", "available", "days");
+        List<String> generalholidaylist = Arrays.asList("holiday", "vacation", "holidays", "christmas", "easter");
+
+        for (String line : output) {
+            for (String word : generalholidaylist) {
+                if (line.toLowerCase().contains(word)) {
+                    String feestdagen = "We are closed on all national holidays";
+                    speak(feestdagen, "feestdagen", true, false);
+                    animateTxt(txtlisten, "We are closed on all national holidays");
+                    return true;
+                }
+            }
+            for (String word : generalcloselist) {
+                if (line.toLowerCase().contains(word)) {
+                    String sluitingstijd = "We close at eleven pm.";
+                    speak(sluitingstijd, "sluitingstijd", true, false);
+                    animateTxt(txtlisten, "We close at 23:00");
+                    return true;
+                }
+            }
+            for (String word : generaltimelist) {
+                if (line.toLowerCase().contains(word)) {
+                    String openingstijd = "We are open every day of the week from eleven am till 11 pm";
+                    speak(openingstijd, "openingstijd", true, false);
+                    animateTxt(txtlisten, "Every day: 11:00 - 23:00");
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public Boolean getGoesWellWith(List<String> output, List<String> menu){
+        List<String> goeswellwithlist = Arrays.asList("combine", "advice");
+        String outputitem = GeneralTools.checkForWords(output, menu);
+        String menuitem = outputitem.toLowerCase();
+        String speakitems = "";
+        if (GeneralTools.checkForWords(output, goeswellwithlist)  != "null") {
+            if(menuitem.toLowerCase() != "null"){
+                int id = orderProcessor.linkNameWithID(menuitem);
+                ArrayList<String> listofitems = menuProcessor.goesWellWith(id);
+                for(String item : listofitems) {
+                    if(item.equals("None")) {
+                        speak("I can not give you advice on" + menuitem, "emptyadvicelist" , true, false);
+                        animateTxt(txtlisten, "I can not give you advice on " + menuitem);
+                    }else{
+                        speakitems += item;
+                        speakitems += ", ";
+                        speak("We recommend the following items with " + menuitem + ": " + speakitems, "advice", true, false);
+                        animateTxt(txtlisten, "We recommend the following items with " + menuitem + ": " + speakitems);
+                    }
+                }
+                return true;
+            }else{
+                speak("Im sorry but i can't give you advice on that", "noadvice", true, false);
+                animateTxt(txtlisten, "Im sorry but I can't give you advice on that");
+            }
+
+
+        }
+        return false;
+    }
+
+    public Boolean getInvoicePrice(List<String> output) {
+        List<String> generalpricelist = Arrays.asList("bill", "invoice", "pay", "check");
+
+        if (GeneralTools.checkForWords(output, generalpricelist) != "null") {
+            NumberFormat formatter = new DecimalFormat("#0.00");
+            double sum = orderProcessor.getOrderSum();
+
+            if (sum != 0) {
+                System.out.println("THIS IS THE SUM: " + sum);
+                String price = GeneralTools.outputMoney(formatter.format(sum));
+                String totalprice = "The total price is " + price + ". Please go to the cash register, a waiter will be waiting for you there.";
+                speak(totalprice, "totalprice", true, false);
+                animateTxt(txtlisten, "Total: €" + formatter.format(sum) + " - A waiter will assist you at the cash register.");
+                return true;
+            } else {
+                speak("No orders have been placed yet.", "ordersnone", true, false);
+                animateTxt(txtlisten, "No orders have been placed.");
+                updateStatus("Waiting for 'hey Iris'", false);
+                return true;
+            }
+        }
+        return false;
     }
 }

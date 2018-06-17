@@ -1,5 +1,6 @@
 package team.smartwaiter.tools;
 
+import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
@@ -16,6 +17,7 @@ public class Fade {
     int fadeEffectDuration;
     int delayDuration;
     int displayFor;
+    boolean shutdown = false;
     public Fade(TextView textV, String[] textList, int displaylength)
     {
         this(textV,700,1000,displaylength, textList);
@@ -57,7 +59,8 @@ public class Fade {
             public void onAnimationRepeat(Animation animation) {}
             @Override
             public void onAnimationEnd(Animation animation) {
-                blobText.startAnimation(textDisplayAnimationObject);
+                if(!shutdown)
+                    blobText.startAnimation(textDisplayAnimationObject);
             }
         });
         textDisplayAnimationObject.setAnimationListener(new AnimationListener() {
@@ -72,7 +75,8 @@ public class Fade {
             @Override
             public void onAnimationEnd(Animation animation) {
                 // TODO Auto-generated method stub
-                blobText.startAnimation(fadeOutAnimationObject);
+                if (!shutdown)
+                    blobText.startAnimation(fadeOutAnimationObject);
             }
         });
         fadeOutAnimationObject.setAnimationListener(new AnimationListener() {
@@ -87,7 +91,8 @@ public class Fade {
             @Override
             public void onAnimationEnd(Animation animation) {
                 // TODO Auto-generated method stub
-                blobText.startAnimation(delayBetweenAnimations);
+                if (!shutdown)
+                    blobText.startAnimation(delayBetweenAnimations);
             }
         });
         delayBetweenAnimations.setAnimationListener(new Animation.AnimationListener() {
@@ -102,12 +107,21 @@ public class Fade {
             @Override
             public void onAnimationEnd(Animation animation) {
                 // TODO Auto-generated method stub
-                blobText.startAnimation(fadeiInAnimationObject);
+                if (!shutdown)
+                    blobText.startAnimation(fadeiInAnimationObject);
             }
         });
     }
     public void startAnimation()
     {
         blobText.startAnimation(fadeOutAnimationObject);
+    }
+
+    public void end(){
+        shutdown = true;
+        blobText.clearAnimation();
+        blobText.animate().cancel();
+//        fadeOutAnimationObject.cancel();
+        blobText.setVisibility(View.GONE);
     }
 }

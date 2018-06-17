@@ -12,5 +12,5 @@ public interface TextToSpeechIniListener {
 
     public void onFailure(TextToSpeech tts);
 
-    public void execReprompt();
+    public void execReprompt(boolean directReprompt);
 }

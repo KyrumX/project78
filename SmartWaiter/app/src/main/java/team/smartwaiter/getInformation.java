@@ -11,7 +11,7 @@ public class getInformation {
     static ApiController apiController = new ApiController();
 
     public static Integer getData(String input) {
-        HashMap<Integer, String> hm = Serializer.menuItems(apiController.getMenu()); // <-- Link the menu item names with ids
+        HashMap<Integer, String> hm = Serializer.MenuItems(apiController.getMenu()); // <-- Link the menu item names with ids
         System.out.println(hm);
         int keyV = 0;
         for (int key : hm.keySet()) {
