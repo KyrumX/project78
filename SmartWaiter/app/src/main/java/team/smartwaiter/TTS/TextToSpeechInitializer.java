@@ -54,10 +54,12 @@ public class TextToSpeechInitializer extends Service{
                                 System.out.println("Change current REPR to " + repr);
 
                                 if(isAskingForReprompt) {
-                                    System.out.println("FULFILLING REPROMPT");
-                                    callback.execReprompt();
+                                    System.out.println("FULFILLING DIRECT REPROMPT");
+                                    callback.execReprompt(true);
+                                } else {
+                                    System.out.println("FULFILLING INDIRECT REPROMPT");
+                                    callback.execReprompt(false);
                                 }
-//                                System.out.println("REPROMPTING");
                             }
 
                             callback.onFinishedSpeaking();

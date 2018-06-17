@@ -1,14 +1,11 @@
 package team.smartwaiter;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
-import android.os.Handler;
 import android.speech.tts.TextToSpeech;
 import android.os.Bundle;
-
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +18,6 @@ import java.util.*;
 
 import android.content.ActivityNotFoundException;
 
-import android.speech.RecognitionListener;
 import android.speech.SpeechRecognizer;
 
 import android.support.annotation.NonNull;
@@ -44,6 +40,7 @@ import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
 import team.smartwaiter.TTS.TextToSpeechIniListener;
 import team.smartwaiter.TTS.TextToSpeechInitializer;
 import team.smartwaiter.api.ApiController;
+import team.smartwaiter.api.MenuProcessor;
 import team.smartwaiter.api.OrderProcessor;
 import team.smartwaiter.api.Serializer;
 import team.smartwaiter.storage.OrderDataSingleton;
@@ -51,7 +48,6 @@ import team.smartwaiter.tools.Fade;
 import team.smartwaiter.tools.GeneralTools;
 import team.smartwaiter.tools.TypeWriter;
 
-//import static team.smartwaiter.MainActivity.orderDataSingleton;
 import static team.smartwaiter.tools.GeneralTools.animateTxt;
 import static team.smartwaiter.tools.GeneralTools.setAlphaAnimation;
 
@@ -63,10 +59,8 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
     public static TypeWriter txtlisten;
     public static OrderDataSingleton orderDataSingleton = OrderDataSingleton.getInstance();
     private static ProgressBar progresslisten;
-    public static Handler handler = new Handler();
     private static boolean hasOrdered = false;
     private boolean flag = false;
-    private boolean hasLeftBeginScreen = false;
     private boolean hasShownSummary = false;
     private TextView example;
     private Fade animator;
@@ -78,8 +72,8 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
     private edu.cmu.pocketsphinx.SpeechRecognizer recognizer;
     final SpeechRecognizer speech = SpeechRecognizer.createSpeechRecognizer(this);
     final Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-    private static Intent intentmenu;
     public TableLayout stk;
+    private Button infoButton;
 
     private final int REQ_CODE_SPEECH_INPUT = 100;
 
@@ -87,6 +81,7 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
     HashMap orderpairs = new HashMap();
     ApiController controller = new ApiController();
     OrderProcessor orderProcessor = new OrderProcessor();
+    MenuProcessor menuProcessor = new MenuProcessor();
 
     public MainActivity() {
         orderDataSingleton.update();
@@ -107,9 +102,9 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
 
         final TextToSpeechIniListener ini = this;
 
-        txtlisten = (TypeWriter) findViewById(R.id.txtlisten);
+        txtlisten = findViewById(R.id.txtlisten);
 
-        stk = (TableLayout) findViewById(R.id.table);
+        stk = findViewById(R.id.table);
 
         AsyncTask.execute(new Runnable() {
             @Override
@@ -136,8 +131,24 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
 
         updateStatus("Preparing Application",  true);
 
-        TextView orderTextView = (TextView) findViewById(R.id.orderTextView);
+        TextView orderTextView = findViewById(R.id.orderTextView);
         orderTextView.setText("#order: " + Integer.toString(orderDataSingleton.getOrderID()));
+
+        // Create InfoButton. When pressed / when hearing "help", it shows example commands.
+        infoButton = (Button) findViewById(R.id.infobutton);
+        Typeface roboto = Typeface.createFromAsset(getAssets(), "fonts/roboto.ttf");
+        infoButton.setTypeface(roboto);
+        infoButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                speak("Welcome. Before you give me a command, please say, hey IRIS. " +
+                        "To order, please say: I would like to order: amount, dish. " +
+                        "I will ask you for confirmation before processing the order. " +
+                        "For advice, please say: I would like advice about: dish. " +
+                        "For the bill, please say: I would like to pay." +
+                        "Enjoy your meal!", "info", true, false);
+            }
+        });
 
         new SetupTask(this).execute();
 
@@ -146,34 +157,18 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-        switch (requestCode) {
-            case REQ_CODE_SPEECH_INPUT: {
-                if (resultCode == RESULT_OK && null != data) {
-                    ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-                }
-                break;
-            }
-
-        }
     }
 
     @Override
     public void onReadyForSpeech(Bundle bundle) {
-//        updateStatus("Waiting for 'hey Iris'", false);
     }
 
 
     @Override
     public void onError(int i) {
         animateTxt(txtlisten, "I didn't quite catch that..");
-//        reorder.setVisibility(View.VISIBLE);
         updateStatus("Waiting for 'hey iris'", false);
         startListening(KWS_SEARCH);
-    }
-
-    public void onResults(Hypothesis hypothesis){
-
     }
 
     @Override
@@ -185,30 +180,33 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
         final String output = matches.get(0).toLowerCase();
         System.out.println("Output: " + output);
 
-        //List<String> food = Arrays.asList("burger", "rice", "spaghetti", "mixed grill", "soup", "steak", "salad", "macaroni");
         List<String> menu;
         menu = Serializer.ConvertMenu(controller.getMenu(), "name");
 
         // if no order has been placed yet
         if (GeneralTools.checkForWords(matches, summarylist) != "null") {
-//            setContentView(R.layout.activity_summ);
             notInListenContentView = true;
             System.out.println("SHOWING SUMMARY----------------------");
             getOrderSummary();
             hasShownSummary = true;
             updateStatus("Waiting for 'hey Iris'", false);
             // if no order has been placed yet
-        }else if (closingTime(matches)){
+        }else if (closingTime(matches)) {
             updateStatus("Waiting for 'hey Iris'", false);
-            startListening(KWS_SEARCH);
             System.out.println("closingtime returned");
+        } else if(getGoesWellWith(matches, menu)){
+            updateStatus("Waiting for 'hey Iris'", false);
+            System.out.println("GoesWellWith returned");
         }else if (!hasOrdered) {
 
             // if it doesn't have keywords for information e.g. 'allergies' or 'information'
             if (!hasInfo(menu, matches)) {
                 getMeal(menu, matches);
-//           speak("I can't seem to figure out what you said, please try again.", "nomenuitem_hasinfo", true);
             }
+
+            if (getInvoicePrice(matches)) {
+                System.out.println("total price returned");}
+
         } else {
             // if an order has been placed, this will confirm or cancel
             List<String> confirmationlist = Arrays.asList("yes", "yeah", "sure", "alright", "okay", "affirmative");
@@ -216,7 +214,7 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
 
             // checks relation between the strings above and the output gotten from user speech
             if (GeneralTools.checkForWords(matches, confirmationlist) != "null"){
-                speak("Order confirmed.", "confirmed");
+                speak("Order confirmed.", "confirmed", true, false);
                 hasOrdered = false;
 
                 //Now that one orderline has been confirmed (e.g. 2 cola's) we need to push it to the db
@@ -228,18 +226,14 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
 
                 // this updates the status bar at the top of the application
                 updateStatus("Waiting for 'hey Iris'", false);
-                startListening(KWS_SEARCH);
             } else if(GeneralTools.checkForWords(matches, denylist) != "null"){
-                speak("Okay, order canceled","canceled");
+                speak("Okay, order canceled","canceled", true, false);
                 animateTxt(txtlisten, "Order canceled.");
                 hasOrdered = false;
                 updateStatus("Waiting for 'hey Iris'", false);
-                startListening(KWS_SEARCH);
             } else {
                 speak("Sorry I didn't catch that, can you say that again?", "failedtohear", true, true);
                 animateTxt(txtlisten, "Didn't catch that, can you say that again?");
-//                reprompt();
-//                startListening(KWS_SEARCH);
             }
         }
 
@@ -250,7 +244,7 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
      This method checks if the user speech contains an info-type message like 'allergies' or 'info'
      */
     public Boolean hasInfo(List<String> consumables, List<String> output) {
-        startListening(KWS_SEARCH);
+//        startListening(KWS_SEARCH);
         List<String> generalinfolist = Arrays.asList("description", "information", "info", "about");
         List<String> price = Arrays.asList("price", "cost");
         List<String> allergies = Arrays.asList("allergy", "allergies", "allergic");
@@ -281,10 +275,9 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
             // user asks about potential allergy substances in a product
             if (getInformation.showInformation(menuitem, "allergy").equals("none")) {
                 // TODO
-                speak(menuitem + " contains no potential allergy substances", "allergy_hasinfo");
+                speak(menuitem + " contains no potential allergy substances", "allergy_hasinfo", true, false);
                 animateTxt(txtlisten, "No allergies inside " + menuitem);
                 updateStatus("Waiting for 'hey Iris'", false);
-//                backtomenu.setVisibility(View.VISIBLE);
             } else {
                 showinfo(infotype, menuitem, menuitem + " ");
             }
@@ -292,18 +285,6 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
         }
 
         return false;
-    }
-
-    /**
-     This method prompts the user for speech input
-     */
-    public void reprompt(){
-        this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                speech.startListening(intent);
-            }
-        });
     }
 
     @Override
@@ -319,6 +300,7 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
      This initiates TextToSpeech
      */
     public void speak(String text, String uttID, boolean... r){
+        recognizer.stop();
         HashMap<String, String> map = new HashMap<String, String>();
         map.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, uttID);
         if (r.length != 0){
@@ -337,9 +319,9 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
         String prefix_text = (args.length < 3) ? "" : args[2];
 
         if (suffix.equals("euros")){
-            speak(prefix + GeneralTools.outputMoney(getInformation.showInformation(menuitem, infotype)), "euros");
+            speak(prefix + GeneralTools.outputMoney(getInformation.showInformation(menuitem, infotype)), "euros", true, false);
         } else {
-            speak(prefix + getInformation.showInformation(menuitem, infotype), "info1");
+            speak(prefix + getInformation.showInformation(menuitem, infotype), "info1", true, false);
         }
 
         animateTxt(txtlisten, GeneralTools.capitalize(menuitem) + "\n\n" + prefix_text + getInformation.showInformation(menuitem, infotype));
@@ -353,7 +335,6 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
     public static void updateStatus(String text, boolean withProgress){
         hasSaidHeyIris = false;
         status.setText(text);
-//        setAlphaAnimation(status);
         if(!withProgress){
             progresslisten.setVisibility(View.INVISIBLE);
         } else {
@@ -368,7 +349,6 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
     public void onSuccess(TextToSpeech tts) {
         this.talk = tts;
         flag = true;
-//        startService(new Intent(this, TextToSpeechInitializer.class));
     }
 
     @Override
@@ -388,13 +368,21 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
     }
 
     @Override
-    public void execReprompt() {
-//        startListening(KWS_SEARCH);
-        reprompt();
+    public void execReprompt(boolean directReprompt) {
+        if (directReprompt)
+            this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    speech.startListening(intent);
+                }
+            });
+        else {
+            startListening(KWS_SEARCH);
+        }
     }
 
     private void getMeal(List<String> typelist,  ArrayList<String> output){
-        startListening(KWS_SEARCH);
+//        startListening(KWS_SEARCH);
         orderpairs.clear();
         Logic logic = new Logic(typelist, output);
         orderpairs = logic.generate();
@@ -407,7 +395,6 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
             speak("I can't seem to figure out what you said, please try again.", "failed1", true, true);
             animateTxt(txtlisten, "I didn't quite catch that.");
             hasOrdered = false;
-//            startListening(KWS_SEARCH);
         } else {
             Set<String> keys = orderpairs.keySet();
 
@@ -415,7 +402,6 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
             String speakorder = "Your order consists of the following: ";
 
             for (String key : keys) {
-//                System.out.println(orderpairs.get(key) + " " + key);
                 speakorder += orderpairs.get(key) + " " + key;
                 order += key + " | amount: " + orderpairs.get(key) + "\n";
             }
@@ -423,8 +409,6 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
             final String order2 = order;
 
             speakorder += ". Confirm by saying yes";
-            final String order1 = speakorder;
-
 
             speak(speakorder, "order", true, true);
 
@@ -434,8 +418,6 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
 
             updateStatus("Waiting for response..", true);
             hasOrdered = true;
-//            orderstatus = true;
-
         }
     }
 
@@ -445,7 +427,6 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
 
     @Override
     public void onBeginningOfSpeech() {
-//        updateStatus("Listening to your voice...", true);
     }
 
     @Override
@@ -460,8 +441,6 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
 
     @Override
     public void onEndOfSpeech() {
-//        if (hasSaidHeyIris)
-//        updateStatus("Waiting for hey iris", false);
     }
 
     @Override
@@ -472,26 +451,7 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
 
         stopExamples();
 
-        int count = 0;
         if (hasShownSummary)
-//            count = stk.getChildCount();
-//            System.out.println("count: " + count);
-//            System.out.println("count: " + count);
-//            System.out.println("count: " + count);
-//            System.out.println("count: " + count);
-//            System.out.println("count: " + count);
-//            System.out.println("count: " + count);
-//            System.out.println("count: " + count);
-//            System.out.println("count: " + count);
-//            System.out.println("count: " + count);
-//            if (count != 0)
-//                System.out.println("count: " + count);
-//                for(int i=0;i<count;i++)
-//                    System.out.println("count = " + count);
-//                    stk.removeViewAt(count - 1);
-//            if (stk != null)
-//                findViewById(android.R.id.content).table.removeAllViews()
-//                stk = null;
             cleanTable(stk);
             txtlisten.setVisibility(View.VISIBLE);
             hasShownSummary = false;
@@ -611,10 +571,10 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
         double totalsum = orderProcessor.getOrderSum();
         System.out.println(totalsum);
         if (totalsum == 0){
-            speak("No orders have been placed yet.", "nosummarypossible");
+            speak("No orders have been placed yet.", "nosummarypossible", true, false);
             animateTxt(txtlisten, "Nothing has been order just yet. Say 'hey Iris' to place an order.");
             System.out.println("is equal to 0");
-            startListening(KWS_SEARCH);
+//            startListening(KWS_SEARCH);
         } else {
             stk = (TableLayout) findViewById(R.id.table);
             stk.setVisibility(View.VISIBLE);
@@ -688,12 +648,7 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
     public void startExamples(){
 //        System.out.println(voorbeeldzinnen[0]);
         Typeface roboto = Typeface.createFromAsset(getAssets(), "fonts/roboto.ttf");
-
-//        TextView example = (TextView) findViewById(R.id.example);
         example.setTypeface(roboto, Typeface.ITALIC);
-//        System.out.println(example.getTypeface());
-
-//        this.animator = new Fade(example, voorbeeldzinnen, 6000);
         this.animator.startAnimation();
     }
 
@@ -714,7 +669,7 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
             for (String word : generalholidaylist) {
                 if (line.toLowerCase().contains(word)) {
                     String feestdagen = "We are closed on all national holidays";
-                    speak(feestdagen, "feestdagen", true);
+                    speak(feestdagen, "feestdagen", true, false);
                     animateTxt(txtlisten, "We are closed on all national holidays");
                     return true;
                 }
@@ -722,7 +677,7 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
             for (String word : generalcloselist) {
                 if (line.toLowerCase().contains(word)) {
                     String sluitingstijd = "We close at eleven pm.";
-                    speak(sluitingstijd, "sluitingstijd", true);
+                    speak(sluitingstijd, "sluitingstijd", true, false);
                     animateTxt(txtlisten, "We close at 23:00");
                     return true;
                 }
@@ -730,7 +685,7 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
             for (String word : generaltimelist) {
                 if (line.toLowerCase().contains(word)) {
                     String openingstijd = "We are open every day of the week from eleven am till 11 pm";
-                    speak(openingstijd, "openingstijd", true);
+                    speak(openingstijd, "openingstijd", true, false);
                     animateTxt(txtlisten, "Every day: 11:00 - 23:00");
                     return true;
                 }
@@ -738,4 +693,52 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
         }
         return false;
     }
+
+    public Boolean getGoesWellWith(List<String> output, List<String> menu){
+        List<String> goeswellwithlist = Arrays.asList("combine", "advice");
+        String outputitem = GeneralTools.checkForWords(output, menu);
+        String menuitem = outputitem.toLowerCase();
+        String speakitems = "";
+        if (GeneralTools.checkForWords(output, goeswellwithlist)  != "null") {
+            if(menuitem.toLowerCase() != "null"){
+                int id = orderProcessor.linkNameWithID(menuitem);
+                ArrayList<String> listofitems = menuProcessor.goesWellWith(id);
+                for(String item : listofitems) {
+                    if(item.equals("None")) {
+                        speak("I can not give you advice on" + menuitem, "emptyadvicelist" , true, false);
+                        animateTxt(txtlisten, "I can not give you advice on " + menuitem);
+                    }else{
+                        speakitems += item;
+                        speakitems += ", ";
+                        speak("We recommend the following items with " + menuitem + ": " + speakitems, "advice", true, false);
+                        animateTxt(txtlisten, "We recommend the following items with " + menuitem + ": " + speakitems);
+                    }
+                }
+                return true;
+            }else{
+                speak("Im sorry but i can't give you advice on that", "noadvice", true, false);
+                animateTxt(txtlisten, "Im sorry but I can't give you advice on that");
+            }
+
+
+        }
+        return false;
+    }
+
+    public Boolean getInvoicePrice(List<String> output) {
+        List<String> generalpricelist = Arrays.asList("bill", "invoice", "pay", "check");
+
+        if (GeneralTools.checkForWords(output, generalpricelist) != "null") {
+            double sum = orderProcessor.getOrderSum();
+            String totalprice = "The total price is " + sum + " euros. Please go to the cash register, a waiter will be waiting for you there.";
+            speak(totalprice, "totalprice", true, false);
+            animateTxt(txtlisten, "Total: " + sum + " - A waiter will await you at the cash register.");
+            return true;
+        }
+
+
+
+        return false;
+    }
+
 }
