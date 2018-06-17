@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
@@ -155,7 +154,11 @@ public class MainActivity extends Activity implements
                 System.out.println("Error");
             }
         });
-        speak("Hi, my name is Iris. I will be your smart waitress today.", "main");
+        if (orderDataSingleton.isFirstLaunch())
+            speak("Hi, my name is Iris. I will be your smart waitress today.", "main");
+        else {
+            speak("Please activate me when you have any questions or want to place an order.", "");
+        }
     }
 
     @Override

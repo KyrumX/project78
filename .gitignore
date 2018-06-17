@@ -224,3 +224,5 @@ fastlane/readme.md
 SmartWaiter/\.idea/caches/build_file_checksums\.ser
 
 SmartWaiter/\.idea/runConfigurations\.xml
+
+*.ser

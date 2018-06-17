@@ -8,6 +8,7 @@ public class OrderDataSingleton {
 
     private boolean constructedOrder = false;
     private int orderID;
+    private boolean firstLaunch = true;
 
     private static ApiController controller = new ApiController();
 
@@ -28,7 +29,7 @@ public class OrderDataSingleton {
     }
 
     public void receiveOrderID() {
-        orderID = Serializer.OrderID(controller.postOrder());
+        orderID = Serializer.orderID(controller.postOrder());
 
         constructedOrder = true;
     }
@@ -38,5 +39,13 @@ public class OrderDataSingleton {
             receiveOrderID();
         }
         System.out.println(orderID);
+    }
+
+    public boolean isFirstLaunch() {
+        return firstLaunch;
+    }
+
+    public void setFirstLaunch(boolean firstLaunch) {
+        this.firstLaunch = firstLaunch;
     }
 }

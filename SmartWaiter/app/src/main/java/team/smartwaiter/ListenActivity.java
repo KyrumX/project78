@@ -1,35 +1,31 @@
 package team.smartwaiter;
 
 import android.app.Activity;
-import android.os.AsyncTask;
-import android.os.Handler;
-import android.speech.tts.TextToSpeech;
-import android.os.Bundle;
-
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.HashMap;
-import java.util.*;
-
 import android.content.ActivityNotFoundException;
-
+import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.os.Handler;
 import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
-
+import android.speech.tts.TextToSpeech;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.speech.RecognizerIntent;
-import android.content.Intent;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import team.smartwaiter.TTS.TextToSpeechIniListener;
 import team.smartwaiter.TTS.TextToSpeechInitializer;
 import team.smartwaiter.api.ApiController;
+import team.smartwaiter.api.MenuProcessor;
 import team.smartwaiter.api.OrderProcessor;
 import team.smartwaiter.api.Serializer;
 import team.smartwaiter.tools.GeneralTools;
@@ -42,6 +38,10 @@ import static team.smartwaiter.tools.GeneralTools.setAlphaAnimation;
 public class ListenActivity extends Activity implements RecognitionListener, TextToSpeechIniListener {
     private TextToSpeechInitializer i;
     private TextToSpeech talk;
+
+    public ListenActivity() {
+        orderDataSingleton.setFirstLaunch(false);
+    }
 
     private TextView status;
     public static TypeWriter txtlisten;
@@ -65,6 +65,7 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
     HashMap orderpairs = new HashMap();
     ApiController controller = new ApiController();
     OrderProcessor orderProcessor = new OrderProcessor();
+    MenuProcessor menuProcessor = new MenuProcessor();
 
     @Override
     protected void onCreate(Bundle state) {
@@ -189,7 +190,7 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
 
         //List<String> food = Arrays.asList("burger", "rice", "spaghetti", "mixed grill", "soup", "steak", "salad", "macaroni");
         List<String> menu;
-        menu = Serializer.ConvertMenu(controller.getMenu(), "name");
+        menu = Serializer.convertMenu(controller.getMenu(), "name");
 
         // if no order has been placed yet
         if (!hasOrdered) {
@@ -199,7 +200,11 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
                 getMeal(menu, matches);
 //                speak("I can't seem to figure out what you said, please try again.", "nomenuitem_hasinfo", true);
                 System.out.println("No infotype gotten so doing getMeal()");
+
             }
+            if (getInvoicePrice(matches)) {
+                System.out.println("total price returned");}
+
             if (talk.isSpeaking()) {
 
             }
@@ -228,10 +233,22 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
                 animateTxt(txtlisten, "Order canceled.");
                 hasOrdered = false;
                 updateStatus("Waiting for command..", false);
+
+                Boolean isSpeaking = true;
+                while (isSpeaking) {
+                    if (!talk.isSpeaking()) {
+                        isSpeaking = false;
+                    }
+                }
+                Intent myIntent = new Intent(this, MainActivity.class);
+                startActivity(myIntent);
+
             } else {
-                speak("Sorry I didn't catch that, can you say that again?", "failedtohear", true);
-                animateTxt(txtlisten, "Didn't catch that, can you say that again?");
-                reprompt();
+
+                    speak("Sorry I didn't catch that, can you say that again?", "failedtohear", true);
+                    animateTxt(txtlisten, "Didn't catch that, can you say that again?");
+                    reprompt();
+
             }
         }
 
@@ -283,6 +300,27 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
 
         return false;
     }
+
+    public Boolean getInvoicePrice(List<String> output) {
+        List<String> generalpricelist = Arrays.asList("bill", "invoice", "pay", "check");
+
+        for (String line : output) {
+            for (String word : generalpricelist) {
+                if (line.toLowerCase().contains(word)) {
+                    double sum = orderProcessor.getOrderSum();
+                    String totalprice = "The total price is " + sum + " euros. Please go to the cash register, a waiter will be waiting for you there.";
+                    speak(totalprice, "totalprice", true);
+                    animateTxt(txtlisten, "Total: " + sum + " - A waiter will await you at the cash register.");
+                    return true;
+                }
+            }
+
+        }
+        return false;
+    }
+
+
+
 
     /**
      This method prompts the user for speech input
@@ -426,6 +464,10 @@ public class ListenActivity extends Activity implements RecognitionListener, Tex
             animateTxt(txtlisten, order2);
 
             System.out.println("ORDERPAIRS: " + orderpairs);
+
+            //TODO: Ralph -->
+            System.out.println("SUM: " + orderProcessor.getOrderSum()); // <-- Returns a double of total sum
+            System.out.println("GOESWELLWITH: " + menuProcessor.goesWellWith(1)); // <-- Returns an arraylist containing all items that go well with <id>
 
             updateStatus("Waiting for response..", true);
             hasOrdered = true;

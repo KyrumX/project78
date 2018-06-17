@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Serializer {
-    public static ArrayList<String> ConvertMenu(JSONArray jsonArray, String wantedValue) {
+    public static ArrayList<String> convertMenu(JSONArray jsonArray, String wantedValue) {
         ArrayList<String> l = new ArrayList<>();
 
         if(jsonArray == null)
@@ -24,7 +24,7 @@ public class Serializer {
         return l;
     }
 
-    public static HashMap<Integer, String> MenuItems(JSONArray jsonArray) {
+    public static HashMap<Integer, String> menuItems(JSONArray jsonArray) {
         HashMap<Integer, String> hm = new HashMap<Integer, String>();
 
         if(jsonArray == null)
@@ -40,7 +40,7 @@ public class Serializer {
         return hm;
     }
 
-    public static HashMap<String, String> MenuItemInformation(JSONObject jsonObject) {
+    public static HashMap<String, String> menuItemInformation(JSONObject jsonObject) {
         HashMap<String, String> hm = new HashMap<String, String>();
 
         if(jsonObject == null)
@@ -58,7 +58,7 @@ public class Serializer {
         return hm;
     }
 
-    public static int OrderID(JSONObject jsonObject) {
+    public static int orderID(JSONObject jsonObject) {
         int orderID = -1;
 
         if(jsonObject == null)
@@ -70,5 +70,50 @@ public class Serializer {
         }
 
         return orderID;
+    }
+
+    public static double orderSum(JSONObject jsonObject) {
+        double sum = -1;
+
+        if(jsonObject == null)
+            return -1;
+        try {
+            if (jsonObject.get("sum") instanceof Integer) {
+                Integer value = (Integer) jsonObject.get("sum");
+                sum = value.doubleValue();
+            }
+            else {
+                sum = (double) jsonObject.get("sum");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return sum;
+    }
+
+    public static HashMap<String, Integer> orderLines(JSONObject jsonObject) {
+        HashMap<String, Integer> result = new HashMap();
+        ApiController controller = new ApiController();
+        HashMap menu = Serializer.menuItems(controller.getMenu());
+
+        if (jsonObject == null) {
+            return result;
+        }
+        try {
+            JSONArray array = jsonObject.getJSONArray("lines");
+            for(int i = 0; i < array.length(); i++) {
+                try {
+                    JSONObject object = array.getJSONObject(i);
+                    String id = (String) menu.get(object.getInt("menuitem_id"));
+                    result.put(id, object.getInt("amount"));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 }
