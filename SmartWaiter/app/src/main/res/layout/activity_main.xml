@@ -16,6 +16,26 @@
         android:background="#3c3336"
         android:visibility="visible" />
 
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <Button
+            android:id="@+id/infobutton"
+            style="@style/RobotoButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="42dp"
+            android:layout_alignStart="@+id/txtlisten"
+            android:layout_marginLeft="7dp"
+            android:layout_marginTop="12dp"
+            android:text="info"
+            android:textAllCaps="false"
+            android:textColor="@color/colorAccent"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:typeface="normal" />
+    </RelativeLayout>
+
     <TextView
         android:id="@+id/orderTextView"
         android:layout_width="match_parent"
@@ -108,21 +128,6 @@
         android:text="What do you recommend me?"
         android:textColor="@android:color/darker_gray"
         android:textStyle="italic" />
-
-    <Button
-        android:id="@+id/infobutton"
-        style="@style/RobotoButtonStyle"
-        android:layout_width="wrap_content"
-        android:layout_height="42dp"
-        android:layout_alignStart="@+id/txtlisten"
-        android:layout_marginLeft="7dp"
-        android:layout_marginTop="12dp"
-        android:text="info"
-        android:textAllCaps="false"
-        android:textColor="@color/colorAccent"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        android:typeface="normal" />
 
     <TableLayout
         android:id="@+id/table"
