@@ -23,7 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.text.DecimalFormat;
-import java.text.NumberFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -562,6 +562,11 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
         orderTextView.setText("#order: " + Integer.toString(orderDataSingleton.getOrderID()));
         DecimalFormat df = new DecimalFormat("#.00");
 
+        DecimalFormatSymbols dfs = df.getDecimalFormatSymbols();
+
+        dfs.setDecimalSeparator('.');
+        df.setDecimalFormatSymbols(dfs);
+
         HashMap sum = orderProcessor.getOrderLines(orderDataSingleton.getOrderID());
         System.out.println("THIS IS SUM: " + sum);
         Set<String> keys = sum.keySet();
@@ -727,7 +732,11 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
         List<String> generalpricelist = Arrays.asList("bill", "invoice", "pay", "check");
 
         if (GeneralTools.checkForWords(output, generalpricelist) != "null") {
-            NumberFormat formatter = new DecimalFormat("#0.00");
+            DecimalFormat formatter = new DecimalFormat("#.00");
+            DecimalFormatSymbols dfs = formatter.getDecimalFormatSymbols();
+
+            dfs.setDecimalSeparator('.');
+            formatter.setDecimalFormatSymbols(dfs);
             double sum = orderProcessor.getOrderSum();
 
             if (sum != 0) {
