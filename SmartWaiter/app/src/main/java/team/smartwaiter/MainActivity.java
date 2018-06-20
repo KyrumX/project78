@@ -745,6 +745,7 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
                 String totalprice = "The total price is " + price + ". Please go to the cash register, a waiter will be waiting for you there.";
                 speak(totalprice, "totalprice", true, false);
                 animateTxt(txtlisten, "Total: €" + formatter.format(sum) + " - A waiter will assist you at the cash register.");
+                updateStatus("Waiting for 'hey Iris'", false);
                 return true;
             } else {
                 speak("No orders have been placed yet.", "ordersnone", true, false);
