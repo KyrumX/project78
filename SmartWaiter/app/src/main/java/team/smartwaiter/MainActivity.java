@@ -1,26 +1,15 @@
 package team.smartwaiter;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
-import android.speech.tts.TextToSpeech;
 import android.os.Bundle;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.Arrays;
-import java.util.List;
-import java.util.HashMap;
-import java.util.*;
-
-import android.content.ActivityNotFoundException;
-
+import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
-
+import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.view.Gravity;
 import android.view.View;
@@ -29,11 +18,18 @@ import android.widget.ProgressBar;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
-import android.speech.RecognizerIntent;
-import android.content.Intent;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import edu.cmu.pocketsphinx.Assets;
 import edu.cmu.pocketsphinx.Hypothesis;
@@ -697,7 +693,7 @@ public class MainActivity extends Activity implements edu.cmu.pocketsphinx.Recog
     }
 
     public Boolean getGoesWellWith(List<String> output, List<String> menu){
-        List<String> goeswellwithlist = Arrays.asList("combine", "advice");
+        List<String> goeswellwithlist = Arrays.asList("combine", "advice", "goes well");
         String outputitem = GeneralTools.checkForWords(output, menu);
         String menuitem = outputitem.toLowerCase();
         String speakitems = "";
